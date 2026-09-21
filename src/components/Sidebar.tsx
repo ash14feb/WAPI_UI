@@ -1,14 +1,24 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import logoUrl from "../../iwapilogo.png";
+import {
+  LayoutDashboard,
+  MessageSquare,
+  FileText,
+  SendHorizontal,
+  Users,
+  Settings,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 
 const LINKS = [
-  { to: "/dashboard", label: "Dashboard", icon: "▦" },
-  { to: "/inbox", label: "Inbox", icon: "✉" },
-  { to: "/templates", label: "Templates", icon: "⊞" },
-  { to: "/campaigns", label: "Campaigns", icon: "◉" },
-  { to: "/contacts", label: "Contacts", icon: "☺" },
-  { to: "/settings", label: "Settings", icon: "⚙" },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/inbox", label: "Live Inbox", icon: MessageSquare },
+  { to: "/templates", label: "Templates", icon: FileText },
+  { to: "/campaigns", label: "Campaigns", icon: SendHorizontal },
+  { to: "/contacts", label: "Contacts", icon: Users },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -20,37 +30,62 @@ export function Sidebar() {
     navigate("/login", { replace: true });
   }
 
+  const initial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
+
   return (
     <nav className="app-sidebar">
       <div className="brand">
-        <img src={logoUrl} alt="ImmerzoWAPI logo" className="brand-logo" />
+        <div className="brand-logo-container">
+          <img
+            src={logoUrl}
+            alt="ImmerzoWAPI"
+            className="brand-logo"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+          <div className="brand-badge" title="Meta Cloud API Connected" />
+        </div>
         <div className="brand-text">
-          <span className="brand-name">ImmerzoWAPI</span>
-          <span className="brand-tagline">Powering your business with WhatsApp API</span>
+          <span className="brand-name">
+            ImmerzoWAPI
+            <ShieldCheck size={16} color="#00a884" />
+          </span>
+          <span className="brand-tagline">Enterprise WhatsApp SaaS</span>
         </div>
       </div>
 
       <ul className="side-nav">
-        {LINKS.map((l) => (
-          <li key={l.to}>
-            <NavLink
-              to={l.to}
-              className={({ isActive }) => `side-link${isActive ? " active" : ""}`}
-            >
-              <span className="side-icon">{l.icon}</span>
-              <span>{l.label}</span>
-            </NavLink>
-          </li>
-        ))}
+        {LINKS.map((l) => {
+          const Icon = l.icon;
+          return (
+            <li key={l.to}>
+              <NavLink
+                to={l.to}
+                className={({ isActive }) => `side-link${isActive ? " active" : ""}`}
+              >
+                <span className="side-icon">
+                  <Icon size={18} />
+                </span>
+                <span>{l.label}</span>
+              </NavLink>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="side-footer">
         <div className="side-workspace">
-          <strong>{tenant?.name ?? "Workspace"}</strong>
-          <span className="muted small">{user?.email}</span>
+          <div className="side-avatar">{initial}</div>
+          <div className="side-workspace-info">
+            <span className="side-workspace-name">{tenant?.name ?? "Enterprise Workspace"}</span>
+            <span className="muted tiny ellipsis">{user?.email ?? "active-user"}</span>
+          </div>
         </div>
-        <button className="side-signout" onClick={handleLogout}>
-          Sign out
+
+        <button className="side-signout" onClick={handleLogout} title="Sign Out">
+          <LogOut size={15} />
+          <span>Sign out</span>
         </button>
       </div>
     </nav>

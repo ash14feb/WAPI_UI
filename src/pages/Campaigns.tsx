@@ -4,6 +4,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError, uploadFile } from "../api/client";
 import type { Campaign, Contact, MessageTemplate } from "../api/types";
 import { countVars, extractBodyText, extractHeader, renderPreview } from "../inbox/templatePreview";
+import { PageLoader, ButtonSpinner } from "../components/Loader";
+import {
+  Megaphone,
+  Plus,
+  Search,
+  CheckCircle2,
+  Clock,
+  X,
+  UploadCloud,
+  ChevronRight,
+  Send,
+  Zap,
+} from "lucide-react";
 
 export function CampaignsPage() {
   const navigate = useNavigate();
@@ -12,6 +25,7 @@ export function CampaignsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactSearch, setContactSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [serverDetails, setServerDetails] = useState<string | null>(null);
@@ -27,6 +41,7 @@ export function CampaignsPage() {
   const [uploadingHeader, setUploadingHeader] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const [c, t] = await Promise.all([
         api<Campaign[]>("/api/v1/campaigns"),
@@ -36,6 +51,8 @@ export function CampaignsPage() {
       setTemplates(t.filter((x) => x.status === "APPROVED"));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load campaigns");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -58,30 +75,20 @@ export function CampaignsPage() {
     return () => clearTimeout(t);
   }, [contactSearch]);
 
-  useEffect(() => {
-    if (!showCreate) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowCreate(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [showCreate]);
+  const chosenTemplate = templates.find((t) => t.id === templateId);
+  const header = chosenTemplate ? extractHeader(chosenTemplate.componentsJson) : null;
+  const needsHeaderMedia = header !== null && header.format !== "TEXT";
+  const bodyText = chosenTemplate ? extractBodyText(chosenTemplate.componentsJson) : null;
+  const varCount = bodyText ? countVars(bodyText) : 0;
 
-  const template = templates.find((t) => t.id === templateId) ?? null;
-  const varCount = template ? countVars(extractBodyText(template.componentsJson) ?? "") : 0;
-  const header = template ? extractHeader(template.componentsJson) : null;
-  const needsHeaderMedia = !!header && header.format !== "TEXT";
-
-  useEffect(() => {
-    setParams((prev) => Array.from({ length: varCount }, (_, i) => prev[i] ?? ""));
-  }, [varCount]);
-
-  useEffect(() => {
-    // Sends need a numeric media id (fresh upload) or public URL — the
-    // template's creation sample handle is not valid for sending.
+  function onTemplateChange(id: string) {
+    setTemplateId(id);
+    const tmpl = templates.find((t) => t.id === id);
+    const count = tmpl ? countVars(extractBodyText(tmpl.componentsJson) || "") : 0;
+    setParams(Array(count).fill(""));
     setHeaderHandle("");
     setHeaderLink("");
-  }, [templateId]);
+  }
 
   function toggleContact(id: string) {
     setSelected((prev) => {
@@ -92,21 +99,21 @@ export function CampaignsPage() {
     });
   }
 
-  const formValid =
-    name.trim().length > 0 &&
-    templateId.length > 0 &&
-    selected.size > 0 &&
-    params.every((p) => p.trim().length > 0) &&
-    (!needsHeaderMedia || headerHandle.length > 0 || headerLink.trim().length > 0);
+  function selectAll() {
+    setSelected(new Set(contacts.map((c) => c.id)));
+  }
 
-  async function onHeaderFile(file: File | undefined) {
-    if (!file) return;
+  function clearAll() {
+    setSelected(new Set());
+  }
+
+  async function onUploadHeader(file: File | undefined) {
+    if (!file || uploadingHeader) return;
     setUploadingHeader(true);
     setError(null);
     try {
       const r = await uploadFile("/api/v1/whatsapp/media/upload", file);
       setHeaderHandle(r.handle);
-      setHeaderLink("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Media upload failed");
     } finally {
@@ -114,31 +121,39 @@ export function CampaignsPage() {
     }
   }
 
+  const formValid =
+    name.trim().length > 0 &&
+    templateId.length > 0 &&
+    selected.size > 0 &&
+    params.every((p) => p.trim().length > 0) &&
+    (!needsHeaderMedia || Boolean(headerHandle || headerLink.trim()));
+
   async function onCreate(e: FormEvent) {
     e.preventDefault();
-    if (!formValid) return;
+    if (!formValid || creating) return;
     setCreating(true);
     setError(null);
     setNotice(null);
     setServerDetails(null);
     try {
-      const created = await api<{ id: string }>("/api/v1/campaigns", {
+      const created = await api<Campaign>("/api/v1/campaigns", {
         method: "POST",
         body: JSON.stringify({
           name: name.trim(),
           templateId,
           contactIds: [...selected],
           parameters: params.length > 0 ? params : undefined,
-          headerMedia: needsHeaderMedia && header
-            ? {
-                kind: header.format.toLowerCase(),
-                ...(headerHandle ? { id: headerHandle } : { link: headerLink.trim() }),
-              }
-            : undefined,
+          headerMedia:
+            needsHeaderMedia && header
+              ? {
+                  kind: header.format.toLowerCase(),
+                  ...(headerHandle ? { id: headerHandle } : { link: headerLink.trim() }),
+                }
+              : undefined,
           scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
         }),
       });
-      setNotice(`Campaign created with ${selected.size} recipient(s).`);
+      setNotice(`Broadcast campaign created with ${selected.size} recipient(s).`);
       setName("");
       setTemplateId("");
       setSelected(new Set());
@@ -162,179 +177,388 @@ export function CampaignsPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page page-wide">
       <header className="page-header">
         <div>
-          <h1>Broadcast campaigns</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "#00a884",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                background: "#e6f7f3",
+                padding: "0.2rem 0.5rem",
+                borderRadius: "6px",
+              }}
+            >
+              Bulk Broadcasting
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+              {campaigns.length} Total Campaigns
+            </span>
+          </div>
+          <h1>Broadcast Campaigns</h1>
           <p className="muted small" style={{ margin: "0.25rem 0 0" }}>
-            Send approved templates to many contacts at once.
+            Reach targeted audience segments at scale using Meta-approved WhatsApp message templates.
           </p>
         </div>
+
         <div className="page-actions">
-          <button className="primary-btn" onClick={() => { setShowCreate(true); setError(null); }}>
-            + New Broadcast
+          <button
+            className="primary-btn"
+            onClick={() => {
+              setShowCreate(true);
+              setError(null);
+            }}
+          >
+            <Plus size={16} />
+            <span>New Broadcast</span>
           </button>
         </div>
       </header>
 
       {error && <div className="error">{error}</div>}
       {serverDetails && (
-        <details className="card">
-          <summary className="muted small">Server validation details</summary>
-          <pre className="small">{serverDetails}</pre>
+        <details className="card" style={{ background: "#fef2f2" }}>
+          <summary className="small" style={{ color: "#dc2626", fontWeight: 600 }}>
+            Server validation details
+          </summary>
+          <pre className="small mono" style={{ margin: "0.5rem 0 0", color: "#991b1b" }}>{serverDetails}</pre>
         </details>
       )}
       {notice && <div className="notice">{notice}</div>}
 
+      {/* Broadcasts List Card */}
+      <section className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+          <h2>
+            <Megaphone size={18} color="#00a884" />
+            <span>All Broadcast Campaigns ({campaigns.length})</span>
+          </h2>
+        </div>
+
+        {loading ? (
+          <PageLoader
+            message="Loading broadcast campaigns…"
+            description="Fetching campaigns, audience contacts, and approved templates from WhatsApp Business"
+            minHeight="260px"
+          />
+        ) : campaigns.length === 0 ? (
+          <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
+            <Megaphone size={36} color="#cbd5e1" />
+            <span style={{ fontWeight: 600, color: "#475569" }}>No broadcasts scheduled or sent yet</span>
+            <span className="tiny">Click "New Broadcast" to assemble your first WhatsApp campaign blast.</span>
+          </div>
+        ) : (
+          <div className="table-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Campaign Name</th>
+                  <th>Template</th>
+                  <th>Status</th>
+                  <th>Delivery Progress</th>
+                  <th style={{ textAlign: "right" }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns.map((c) => {
+                  const pct =
+                    c.counts.total > 0
+                      ? Math.min(100, Math.round(((c.counts.SENT + c.counts.FAILED) / c.counts.total) * 100))
+                      : 0;
+
+                  return (
+                    <tr key={c.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
+                        <div className="muted tiny" style={{ fontFamily: "var(--font-mono)" }}>
+                          ID: {c.id.slice(0, 8)}…
+                        </div>
+                      </td>
+                      <td>
+                        {c.template ? (
+                          <div style={{ fontSize: "0.8125rem", color: "#334155" }}>
+                            <div style={{ fontWeight: 600 }}>{c.template.name}</div>
+                            <div className="muted tiny">{c.template.language}</div>
+                          </div>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {c.status === "COMPLETED" ? (
+                          <span className="badge badge-approved">
+                            <CheckCircle2 size={12} />
+                            <span>Completed</span>
+                          </span>
+                        ) : c.status === "SENDING" ? (
+                          <span className="badge badge-pending">
+                            <Zap size={12} />
+                            <span>Sending</span>
+                          </span>
+                        ) : c.status === "SCHEDULED" ? (
+                          <span className="badge badge-pending">
+                            <Clock size={12} />
+                            <span>Scheduled</span>
+                          </span>
+                        ) : (
+                          <span className="badge badge-draft">
+                            <span>{c.status}</span>
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ minWidth: "180px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", marginBottom: "0.25rem" }}>
+                          <span>
+                            {c.counts.SENT} / {c.counts.total} sent
+                          </span>
+                          <span style={{ fontWeight: 600 }}>{pct}%</span>
+                        </div>
+                        <div className="progress-track" style={{ height: "6px" }}>
+                          <div className="progress-fill" style={{ width: `${pct}%` }} />
+                        </div>
+                        {c.counts.FAILED > 0 && (
+                          <span style={{ fontSize: "0.7rem", color: "#dc2626", marginTop: "0.2rem", display: "inline-block" }}>
+                            ⚠ {c.counts.FAILED} failed
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <Link to={`/campaigns/${c.id}`} className="secondary-btn" style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem" }}>
+                          <span>View Detail</span>
+                          <ChevronRight size={13} />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* New Broadcast Modal */}
       {showCreate && (
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h2>New broadcast</h2>
-              <button className="link-btn" onClick={() => setShowCreate(false)}>✕</button>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Megaphone size={20} color="#00a884" />
+                <h2>Create Broadcast Campaign</h2>
+              </div>
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => setShowCreate(false)}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <section style={{ margin: 0 }}>
-              <form onSubmit={onCreate} className="form-grid">
-          <label>
-            Campaign name
-            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={200} />
-          </label>
-          <label>
-            Template (approved only)
-            <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} required>
-              <option value="">Select…</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.language})
-                </option>
-              ))}
-            </select>
-          </label>
-          {template && needsHeaderMedia && header && (
-            <label className="span-2">
-              Header {header.format.toLowerCase()} (required — same for every recipient)
-              <input
-                type="file"
-                accept={
-                  header.format === "IMAGE"
-                    ? "image/jpeg,image/png,image/webp"
-                    : header.format === "VIDEO"
-                      ? "video/mp4"
-                      : "application/pdf"
-                }
-                disabled={uploadingHeader}
-                onChange={(e) => void onHeaderFile(e.target.files?.[0])}
-              />
-              <input
-                value={headerLink}
-                style={{ marginTop: "0.35rem" }}
-                maxLength={2048}
-                placeholder="…or paste public https:// URL"
-                disabled={uploadingHeader}
-                onChange={(e) => {
-                  setHeaderLink(e.target.value);
-                  if (e.target.value.trim()) setHeaderHandle("");
-                }}
-              />
-              {uploadingHeader && <span className="muted small">Uploading to Meta…</span>}
-              {headerHandle && <span className="muted small">Attached ✓ (Meta media id)</span>}
-            </label>
-          )}
-          {template && varCount > 0 && (
-            <label className="span-2">
-              Shared values for {"{{1}}"}…{"{{" + varCount + "}}"} (same for every recipient)
-              {params.map((p, i) => (
+
+            <form onSubmit={onCreate} className="form-grid">
+              <label className="span-2">
+                Broadcast Campaign Name
                 <input
-                  key={i}
-                  value={p}
-                  style={{ marginTop: "0.35rem" }}
-                  placeholder={`Value for {{${i + 1}}}`}
-                  onChange={(e) =>
-                    setParams((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))
-                  }
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. VIP Spring Festival Offer"
+                  required
+                  maxLength={200}
                 />
-              ))}
-              {extractBodyText(template.componentsJson) && (
-                <div className="preview-box" style={{ marginTop: "0.4rem" }}>
-                  <div className="muted tiny">Preview</div>
-                  <div className="bubble-text">
-                    {renderPreview(extractBodyText(template.componentsJson) ?? "", params)}
+              </label>
+
+              <label className="span-2">
+                Select Approved WhatsApp Template
+                <select value={templateId} onChange={(e) => onTemplateChange(e.target.value)} required>
+                  <option value="">Select a template…</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.language}) — {t.category ?? "UTILITY"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {/* Template Preview Snippet */}
+              {chosenTemplate && bodyText && (
+                <div
+                  className="span-2"
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid var(--border)",
+                    borderRadius: "10px",
+                    padding: "0.75rem 1rem",
+                  }}
+                >
+                  <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "0.35rem" }}>
+                    Selected Template Text
+                  </div>
+                  <div style={{ fontSize: "0.875rem", color: "#1e293b", whiteSpace: "pre-wrap" }}>
+                    {renderPreview(bodyText, params)}
                   </div>
                 </div>
               )}
-            </label>
-          )}
-          <label>
-            Schedule (optional)
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-            />
-          </label>
-          <label>
-            Recipients ({selected.size} selected)
-            <input
-              type="search"
-              placeholder="Search contacts…"
-              value={contactSearch}
-              onChange={(e) => setContactSearch(e.target.value)}
-            />
-          </label>
-          <div className="span-2 contact-pick">
-            {contacts.map((c) => (
-              <label key={c.id} className="check-row">
+
+              {needsHeaderMedia && header && (
+                <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                  <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#0f172a" }}>
+                    Header Media ({header.format})
+                  </span>
+                  <label
+                    style={{
+                      border: "2px dashed #cbd5e1",
+                      borderRadius: "10px",
+                      padding: "0.875rem",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      background: "#f8fafc",
+                    }}
+                  >
+                    <UploadCloud size={20} color="#00a884" style={{ margin: "0 auto" }} />
+                    <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#0f172a", marginTop: "0.2rem" }}>
+                      {uploadingHeader ? "Uploading media…" : headerHandle ? `Uploaded: ${headerHandle}` : `Select ${header.format.toLowerCase()} file`}
+                    </div>
+                    <input
+                      type="file"
+                      hidden
+                      disabled={uploadingHeader}
+                      onChange={(e) => void onUploadHeader(e.target.files?.[0])}
+                    />
+                  </label>
+                  <input
+                    value={headerLink}
+                    onChange={(e) => setHeaderLink(e.target.value)}
+                    placeholder="Or enter public media URL…"
+                    style={{ marginTop: "0.25rem" }}
+                  />
+                </div>
+              )}
+
+              {/* Dynamic Variables */}
+              {varCount > 0 && (
+                <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#334155" }}>
+                    Template Variables ({varCount})
+                  </div>
+                  {params.map((val, idx) => (
+                    <label key={idx} style={{ margin: 0 }}>
+                      <span className="muted small">Variable {"{{" + (idx + 1) + "}}"}</span>
+                      <input
+                        value={val}
+                        placeholder={`Value for {{${idx + 1}}}`}
+                        onChange={(e) => {
+                          const next = [...params];
+                          next[idx] = e.target.value;
+                          setParams(next);
+                        }}
+                        required
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {/* Schedule Optional */}
+              <label className="span-2">
+                Schedule Broadcast (Optional — leave blank to send immediately)
                 <input
-                  type="checkbox"
-                  checked={selected.has(c.id)}
-                  onChange={() => toggleContact(c.id)}
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
                 />
-                <span>{c.name || c.profileName || c.phone}</span>
-                <span className="muted small">{c.phone}</span>
               </label>
-            ))}
-            {contacts.length === 0 && <div className="muted small">No contacts found.</div>}
-          </div>
-          <div className="span-2 modal-actions">
-            <button type="button" className="ghost-btn" onClick={() => setShowCreate(false)}>
-              Cancel
-            </button>
-            <button type="submit" disabled={creating || !formValid}>
-              {creating ? "Creating…" : "Create campaign"}
-            </button>
-          </div>
-        </form>
-            </section>
+
+              {/* Audience Selector */}
+              <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a" }}>
+                    Select Recipients ({selected.size} of {contacts.length} chosen)
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button type="button" className="ghost-btn" style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }} onClick={selectAll}>
+                      Select All
+                    </button>
+                    <button type="button" className="ghost-btn" style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }} onClick={clearAll}>
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                <div className="search-box" style={{ margin: "0.25rem 0" }}>
+                  <div className="search-box-inner">
+                    <Search size={14} className="search-box-icon" />
+                    <input
+                      type="search"
+                      placeholder="Filter audience contacts…"
+                      value={contactSearch}
+                      onChange={(e) => setContactSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    maxHeight: "180px",
+                    overflowY: "auto",
+                    border: "1px solid var(--border)",
+                    borderRadius: "8px",
+                    background: "#ffffff",
+                    padding: "0.5rem",
+                  }}
+                >
+                  {contacts.map((c) => (
+                    <label
+                      key={c.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.6rem",
+                        padding: "0.4rem 0.5rem",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        margin: 0,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected.has(c.id)}
+                        onChange={() => toggleContact(c.id)}
+                      />
+                      <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#0f172a" }}>
+                        {c.name || c.profileName || c.phone}
+                      </span>
+                      <span className="muted tiny" style={{ marginLeft: "auto", fontFamily: "var(--font-mono)" }}>
+                        {c.phone}
+                      </span>
+                    </label>
+                  ))}
+                  {contacts.length === 0 && (
+                    <div className="muted small" style={{ textAlign: "center", padding: "1rem" }}>
+                      No contacts found.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="span-2 modal-actions">
+                <button type="button" className="secondary-btn" onClick={() => setShowCreate(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="primary-btn" disabled={creating || !formValid}>
+                  {creating ? <ButtonSpinner size={15} /> : <Send size={15} />}
+                  <span>{creating ? "Launching Broadcast…" : "Launch Broadcast"}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-
-      <section className="card">
-        <h2>All campaigns ({campaigns.length})</h2>
-        {campaigns.length === 0 ? (
-          <div className="muted">None yet.</div>
-        ) : (
-          <table className="tbl">
-            <thead>
-              <tr><th>Name</th><th>Template</th><th>Status</th><th>Progress</th><th></th></tr>
-            </thead>
-            <tbody>
-              {campaigns.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.name}</td>
-                  <td className="muted small">{c.template ? `${c.template.name} (${c.template.language})` : "—"}</td>
-                  <td><span className={`badge badge-${c.status.toLowerCase()}`}>{c.status}</span></td>
-                  <td className="muted small">
-                    {c.counts.SENT}/{c.counts.total} sent
-                    {c.counts.FAILED > 0 && ` · ${c.counts.FAILED} failed`}
-                  </td>
-                  <td><Link to={`/campaigns/${c.id}`} className="link-btn">Open</Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
     </div>
   );
 }

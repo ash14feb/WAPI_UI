@@ -6,6 +6,23 @@ import type { Conversation, Message } from "../api/types";
 import { useRealtime } from "../realtime/useRealtime";
 import type { RealtimeEvent } from "../realtime/useRealtime";
 import { markSeen, timeAgo } from "./InboxPage";
+import {
+  Send,
+  Paperclip,
+  Check,
+  CheckCheck,
+  Clock,
+  AlertCircle,
+  ArrowLeft,
+  RefreshCw,
+  Image as ImageIcon,
+  Video,
+  FileText,
+  Music,
+  X,
+  Phone,
+  ShieldCheck,
+} from "lucide-react";
 
 interface Ctx {
   onChanged: () => void;
@@ -18,30 +35,88 @@ function statusLabel(m: Message): string {
 
 /** WhatsApp-style ticks for outbound messages. */
 function Ticks({ status }: { status: string }) {
-  if (status === "READ") return <span className="ticks read" title="Read">✓<span className="overlap">✓</span></span>;
-  if (status === "DELIVERED") return <span className="ticks" title="Delivered">✓<span className="overlap">✓</span></span>;
-  if (status === "SENT") return <span className="ticks" title="Sent">✓</span>;
-  if (status === "FAILED") return <span className="ticks failed" title="Failed">⚠</span>;
-  return <span className="ticks" title="Sending">🕐</span>;
+  if (status === "READ") {
+    return (
+      <span className="ticks read" title="Read by recipient">
+        <CheckCheck size={14} color="#53bdeb" />
+      </span>
+    );
+  }
+  if (status === "DELIVERED") {
+    return (
+      <span className="ticks" title="Delivered to recipient">
+        <CheckCheck size={14} color="#8696a0" />
+      </span>
+    );
+  }
+  if (status === "SENT") {
+    return (
+      <span className="ticks" title="Sent via Meta Cloud API">
+        <Check size={14} color="#8696a0" />
+      </span>
+    );
+  }
+  if (status === "FAILED") {
+    return (
+      <span className="ticks failed" title="Message delivery failed">
+        <AlertCircle size={14} color="#dc2626" />
+      </span>
+    );
+  }
+  return (
+    <span className="ticks" title="Sending…">
+      <Clock size={13} color="#8696a0" />
+    </span>
+  );
 }
 
-const MEDIA_LABEL: Record<string, string> = {
-  IMAGE: "🖼 Image",
-  VIDEO: "🎬 Video",
-  DOCUMENT: "📄 Document",
-  AUDIO: "🎵 Audio",
-  STICKER: "⭐ Sticker",
-};
-
 function MessageBody({ m }: { m: Message }) {
-  const label = MEDIA_LABEL[m.messageType];
-  if (!label) return <div className="bubble-text">{m.textContent ?? ""}</div>;
-  return (
-    <div className="bubble-text">
-      <div className="muted small">{label}</div>
-      {m.textContent && <div style={{ marginTop: "0.25rem" }}>{m.textContent}</div>}
-    </div>
-  );
+  if (m.messageType === "IMAGE") {
+    return (
+      <div className="bubble-text">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#0284c7", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+          <ImageIcon size={14} />
+          <span>Image</span>
+        </div>
+        {m.textContent && <div>{m.textContent}</div>}
+      </div>
+    );
+  }
+  if (m.messageType === "VIDEO") {
+    return (
+      <div className="bubble-text">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#7c3aed", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+          <Video size={14} />
+          <span>Video</span>
+        </div>
+        {m.textContent && <div>{m.textContent}</div>}
+      </div>
+    );
+  }
+  if (m.messageType === "DOCUMENT") {
+    return (
+      <div className="bubble-text">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#b45309", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+          <FileText size={14} />
+          <span>Document</span>
+        </div>
+        {m.textContent && <div>{m.textContent}</div>}
+      </div>
+    );
+  }
+  if (m.messageType === "AUDIO") {
+    return (
+      <div className="bubble-text">
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#059669", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+          <Music size={14} />
+          <span>Voice Message</span>
+        </div>
+        {m.textContent && <div>{m.textContent}</div>}
+      </div>
+    );
+  }
+
+  return <div className="bubble-text">{m.textContent ?? ""}</div>;
 }
 
 interface Attachment {
@@ -86,7 +161,6 @@ export function ConversationView() {
     void load();
   }, [load]);
 
-  // Live-merge events for the open conversation; slow refresh as fallback.
   const onRealtime = useCallback(
     (e: RealtimeEvent) => {
       if (e.type !== "message.created" && e.type !== "message.updated") return;
@@ -167,7 +241,19 @@ export function ConversationView() {
   }
 
   if (!conversationId) {
-    return <div className="center muted">Select a conversation to start messaging.</div>;
+    return (
+      <div className="center muted" style={{ height: "100%", flexDirection: "column", gap: "1rem", background: "#f8fafc" }}>
+        <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: "#e6f7f3", display: "flex", alignItems: "center", justifyContent: "center", color: "#00a884" }}>
+          <Phone size={32} />
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <h3 style={{ fontSize: "1.25rem", color: "#0f172a", marginBottom: "0.25rem" }}>ImmerzoWAPI Shared Inbox</h3>
+          <p className="muted small" style={{ maxWidth: "340px", margin: "0 auto" }}>
+            Select a customer conversation from the list to reply directly through WhatsApp Business Cloud API.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const name =
@@ -176,34 +262,77 @@ export function ConversationView() {
     conversation?.contact.phone ??
     "…";
 
+  const initial = name.charAt(0).toUpperCase();
   const canSend = !sending && !uploading && (!!text.trim() || !!attachment);
 
   return (
     <div className="conv-detail">
       <header className="detail-header">
-        <Link to="/inbox" className="back-link">←</Link>
-        <div>
-          <strong>{name}</strong>
-          <div className="muted small">{conversation?.contact.phone}</div>
+        <div className="detail-header-contact">
+          <Link to="/inbox" className="back-link" style={{ marginRight: "0.25rem", color: "#64748b" }}>
+            <ArrowLeft size={20} />
+          </Link>
+
+          <div className="detail-header-avatar">
+            {initial}
+          </div>
+
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <strong style={{ fontSize: "1rem", color: "#0f172a" }}>{name}</strong>
+              <span title="Verified WhatsApp Contact" style={{ display: "inline-flex" }}>
+                <ShieldCheck size={14} color="#00a884" />
+              </span>
+            </div>
+            <div className="muted tiny" style={{ fontFamily: "var(--font-mono)", color: "#64748b" }}>
+              {conversation?.contact.phone}
+            </div>
+          </div>
         </div>
-        <button className="link-btn" onClick={() => void load()}>Refresh</button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <button
+            className="ghost-btn"
+            onClick={() => void load()}
+            title="Refresh messages"
+          >
+            <RefreshCw size={15} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </header>
 
-      {error && <div className="error">{error}</div>}
+      {error && <div className="error" style={{ margin: "0.5rem 1rem" }}>{error}</div>}
 
       <div className="msg-list">
+        <div style={{ textAlign: "center", margin: "0.75rem 0", userSelect: "none" }}>
+          <span
+            style={{
+              background: "#ffffff",
+              color: "#64748b",
+              fontSize: "0.6875rem",
+              fontWeight: 600,
+              padding: "0.3rem 0.75rem",
+              borderRadius: "8px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            🔒 End-to-end encrypted via WhatsApp Business Cloud API
+          </span>
+        </div>
+
         {messages.map((m) => (
           <div key={m.id} className={`bubble ${m.direction === "OUTBOUND" ? "out" : "in"}`}>
             <MessageBody m={m} />
             <div
-              className="bubble-meta muted tiny"
+              className="bubble-meta"
               title={m.messageTimestamp ? new Date(m.messageTimestamp).toLocaleString() : statusLabel(m)}
             >
-              {timeAgo(m.messageTimestamp)}
+              <span>{timeAgo(m.messageTimestamp)}</span>
               {m.direction === "OUTBOUND" && (
-                <>
-                  {" "}<Ticks status={m.status} />
-                </>
+                <Ticks status={m.status} />
               )}
             </div>
           </div>
@@ -216,16 +345,28 @@ export function ConversationView() {
           {attachment.previewUrl ? (
             <img src={attachment.previewUrl} alt="Attachment" className="attach-thumb" />
           ) : (
-            <span className="muted">📎</span>
+            <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <FileText size={20} color="#00a884" />
+            </div>
           )}
-          <span className="small ellipsis">{attachment.fileName}</span>
-          <button className="link-btn" onClick={() => setAttachment(null)}>Remove</button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="small ellipsis" style={{ fontWeight: 600 }}>{attachment.fileName}</div>
+            <div className="muted tiny" style={{ textTransform: "uppercase" }}>{attachment.kind} attached</div>
+          </div>
+          <button
+            type="button"
+            className="ghost-btn"
+            onClick={() => setAttachment(null)}
+            title="Remove attachment"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
       <form className="composer" onSubmit={onSend}>
-        <label className="ghost-btn attach-btn" title="Attach image, video or document">
-          📎
+        <label className="ghost-btn" title="Attach file or media" style={{ cursor: "pointer", borderRadius: "50%", padding: "0.6rem" }}>
+          <Paperclip size={18} color="#54656f" />
           <input
             type="file"
             hidden
@@ -237,14 +378,20 @@ export function ConversationView() {
             }}
           />
         </label>
+
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={attachment ? "Add a caption…" : "Type a message…"}
+          placeholder={attachment ? "Add a caption to this media…" : "Type a message…"}
           maxLength={4096}
         />
-        <button type="submit" disabled={!canSend}>
-          {sending ? "…" : uploading ? "⇪" : "Send"}
+
+        <button type="submit" disabled={!canSend} title="Send WhatsApp Message">
+          {sending ? (
+            <RefreshCw size={16} className="animate-spin" />
+          ) : (
+            <Send size={16} />
+          )}
         </button>
       </form>
     </div>

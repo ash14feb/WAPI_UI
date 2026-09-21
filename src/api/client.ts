@@ -1,6 +1,6 @@
 import type { ApiResult } from "./types";
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000";
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "https://wapiapi.vercel.app";
 
 const ACCESS_KEY = "wa.accessToken";
 const REFRESH_KEY = "wa.refreshToken";

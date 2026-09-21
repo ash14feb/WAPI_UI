@@ -1,3 +1,5 @@
+import { fixMojibake } from "../utils/textUtils";
+
 /** Highest {{n}} index in template body text. */
 export function countVars(text: string): number {
   let max = 0;
@@ -9,19 +11,21 @@ export function countVars(text: string): number {
 
 /** Preview with {{n}} replaced by values[n-1]; missing kept as-is. */
 export function renderPreview(text: string, values: string[]): string {
-  return text.replace(/\{\{(\d+)\}\}/g, (match, n: string) => {
+  const rendered = text.replace(/\{\{(\d+)\}\}/g, (match, n: string) => {
     const v = values[Number(n) - 1];
     return v !== undefined && v !== "" ? v : match;
   });
+  return fixMojibake(rendered);
 }
 
 /** Full preview: positional {{1}} via values, named {{name}} via named map. */
 export function renderPreviewFull(text: string, values: string[], named: Record<string, string>): string {
   const positional = renderPreview(text, values);
-  return positional.replace(/\{\{([a-z_][a-z0-9_]*)\}\}/gi, (match, n: string) => {
+  const rendered = positional.replace(/\{\{([a-z_][a-z0-9_]*)\}\}/gi, (match, n: string) => {
     const key = n.toLowerCase();
     return named[key] ?? named[n] ?? match;
   });
+  return fixMojibake(rendered);
 }
 
 interface StoredComponent {
@@ -51,7 +55,9 @@ export function extractExampleValues(componentsJson: string | null): string[] {
   const body = parseComponents(componentsJson).find((c) => c.type === "BODY" || c.type === "body");
   const ex = body?.example?.body_text;
   if (Array.isArray(ex) && ex.length > 0 && Array.isArray(ex[0])) {
-    return (ex[0] as unknown[]).filter((x): x is string => typeof x === "string");
+    return (ex[0] as unknown[])
+      .filter((x): x is string => typeof x === "string")
+      .map((s) => fixMojibake(s));
   }
   return [];
 }
@@ -63,7 +69,9 @@ export function extractNamedExamples(componentsJson: string | null): Record<stri
   const out: Record<string, string> = {};
   if (Array.isArray(params)) {
     for (const p of params) {
-      if (p.param_name && typeof p.example === "string") out[p.param_name.toLowerCase()] = p.example;
+      if (p.param_name && typeof p.example === "string") {
+        out[p.param_name.toLowerCase()] = fixMojibake(p.example);
+      }
     }
   }
   return out;
@@ -73,7 +81,9 @@ export function extractNamedExamples(componentsJson: string | null): Record<stri
 export function extractHeaderExampleValues(componentsJson: string | null): string[] {
   const h = parseComponents(componentsJson).find((c) => c.type === "HEADER" || c.type === "header");
   const ex = (h?.example as { header_text?: unknown } | undefined)?.header_text;
-  if (Array.isArray(ex)) return ex.filter((x): x is string => typeof x === "string");
+  if (Array.isArray(ex)) {
+    return ex.filter((x): x is string => typeof x === "string").map((s) => fixMojibake(s));
+  }
   return [];
 }
 
@@ -84,7 +94,7 @@ export function extractBodyText(componentsJson: string | null): string | null {
     const arr = JSON.parse(componentsJson) as Array<{ type?: string; text?: string }>;
     if (!Array.isArray(arr)) return null;
     const body = arr.find((c) => c.type === "BODY" || c.type === "body");
-    return typeof body?.text === "string" ? body.text : null;
+    return typeof body?.text === "string" ? fixMojibake(body.text) : null;
   } catch {
     return null;
   }
@@ -104,11 +114,50 @@ export function extractHeader(componentsJson: string | null): HeaderInfo | null 
     const h = arr.find((c) => c.type === "HEADER" || c.type === "header");
     if (!h) return null;
     const format = (h.format ?? "TEXT").toUpperCase();
+    const cleanText = h.text ? fixMojibake(h.text) : undefined;
     if (format !== "TEXT" && format !== "IMAGE" && format !== "VIDEO" && format !== "DOCUMENT") {
-      return { format: "TEXT", text: h.text };
+      return { format: "TEXT", text: cleanText };
     }
-    return { format: format as HeaderInfo["format"], text: h.text };
+    return { format: format as HeaderInfo["format"], text: cleanText };
   } catch {
     return null;
   }
 }
+
+/** FOOTER text from stored components JSON, if any. */
+export function extractFooter(componentsJson: string | null): string | null {
+  if (!componentsJson) return null;
+  try {
+    const arr = JSON.parse(componentsJson) as Array<{ type?: string; text?: string }>;
+    if (!Array.isArray(arr)) return null;
+    const f = arr.find((c) => c.type === "FOOTER" || c.type === "footer");
+    return typeof f?.text === "string" ? fixMojibake(f.text) : null;
+  } catch {
+    return null;
+  }
+}
+
+export interface TemplateButtonInfo {
+  type: string;
+  text?: string;
+  url?: string;
+  phone_number?: string;
+}
+
+/** BUTTONS list from stored components JSON, if any. */
+export function extractButtons(componentsJson: string | null): TemplateButtonInfo[] {
+  if (!componentsJson) return [];
+  try {
+    const arr = JSON.parse(componentsJson) as Array<{ type?: string; buttons?: TemplateButtonInfo[] }>;
+    if (!Array.isArray(arr)) return [];
+    const b = arr.find((c) => c.type === "BUTTONS" || c.type === "buttons");
+    if (!b || !Array.isArray(b.buttons)) return [];
+    return b.buttons.map((btn) => ({
+      ...btn,
+      text: btn.text ? fixMojibake(btn.text) : undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
+

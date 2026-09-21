@@ -2,6 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, ApiError } from "../api/client";
 import type { Contact } from "../api/types";
+import { PageLoader, ButtonSpinner } from "../components/Loader";
+import {
+  Users,
+  UserPlus,
+  Search,
+  Smartphone,
+  Mail,
+  Edit3,
+  Trash2,
+  X,
+  ShieldCheck,
+} from "lucide-react";
 
 interface Draft {
   phone: string;
@@ -11,9 +23,26 @@ interface Draft {
 
 const EMPTY: Draft = { phone: "", name: "", email: "" };
 
+const AVATAR_COLORS = [
+  "#e0f2fe", "#fef3c7", "#dcfce7", "#f3e8ff", "#fee2e2", "#ffedd5"
+];
+const AVATAR_TEXT = [
+  "#0369a1", "#b45309", "#15803d", "#7e22ce", "#b91c1c", "#c2410c"
+];
+
+function getAvatarColors(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % AVATAR_COLORS.length;
+  return { bg: AVATAR_COLORS[idx], text: AVATAR_TEXT[idx] };
+}
+
 export function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -22,6 +51,7 @@ export function ContactsPage() {
   const [showForm, setShowForm] = useState(false);
 
   const load = useCallback(async (q: string) => {
+    setLoading(true);
     try {
       setContacts(
         await api<Contact[]>(`/api/v1/contacts${q.trim() ? `?search=${encodeURIComponent(q.trim())}` : ""}`),
@@ -29,6 +59,8 @@ export function ContactsPage() {
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load contacts");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -54,10 +86,10 @@ export function ContactsPage() {
       });
       if (editing) {
         await api(`/api/v1/contacts/${editing.id}`, { method: "PUT", body });
-        setNotice("Contact updated.");
+        setNotice("Contact updated successfully.");
       } else {
         await api("/api/v1/contacts", { method: "POST", body });
-        setNotice("Contact added.");
+        setNotice("Contact added to audience list.");
       }
       setDraft(EMPTY);
       setEditing(null);
@@ -86,7 +118,7 @@ export function ContactsPage() {
 
   async function onDelete(c: Contact) {
     const label = c.name || c.profileName || c.phone;
-    if (!window.confirm(`Delete ${label}? Their conversations, messages and campaign links are removed too.`)) {
+    if (!window.confirm(`Delete ${label}? Associated conversation history will also be removed.`)) {
       return;
     }
     setError(null);
@@ -102,17 +134,46 @@ export function ContactsPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page page-wide">
       <header className="page-header">
         <div>
-          <h1>Contacts</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "#00a884",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                background: "#e6f7f3",
+                padding: "0.2rem 0.5rem",
+                borderRadius: "6px",
+              }}
+            >
+              Audience Directory
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+              {contacts.length} Contacts
+            </span>
+          </div>
+          <h1>Audience Contacts</h1>
           <p className="muted small" style={{ margin: "0.25rem 0 0" }}>
-            Customers you can message and target in campaigns.
+            Manage your opted-in WhatsApp customer list for conversational support and targeted broadcasts.
           </p>
         </div>
+
         <div className="page-actions">
-          <button className="primary-btn" onClick={() => { cancelEdit(); setShowForm(true); setError(null); }}>
-            + Create Contact
+          <button
+            className="primary-btn"
+            onClick={() => {
+              cancelEdit();
+              setShowForm(true);
+              setError(null);
+            }}
+          >
+            <UserPlus size={16} />
+            <span>Add Contact</span>
           </button>
         </div>
       </header>
@@ -120,93 +181,216 @@ export function ContactsPage() {
       {error && <div className="error">{error}</div>}
       {notice && <div className="notice">{notice}</div>}
 
+      <section className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
+          <h2>
+            <Users size={18} color="#00a884" />
+            <span>All Contacts ({contacts.length})</span>
+          </h2>
+
+          <div className="search-box" style={{ width: "320px", margin: 0 }}>
+            <div className="search-box-inner">
+              <Search size={14} className="search-box-icon" />
+              <input
+                type="search"
+                placeholder="Search name or phone…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <PageLoader
+            message="Loading customer contacts…"
+            description="Searching and retrieving verified WhatsApp contacts directory"
+            minHeight="260px"
+          />
+        ) : contacts.length === 0 ? (
+          <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
+            <Users size={36} color="#cbd5e1" />
+            <span style={{ fontWeight: 600, color: "#475569" }}>No contacts found</span>
+            <span className="tiny">Click "Add Contact" above or receive an inbound customer message to populate this directory.</span>
+          </div>
+        ) : (
+          <div className="table-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Customer Profile</th>
+                  <th>WhatsApp Number</th>
+                  <th>Email Address</th>
+                  <th>Verification</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contacts.map((c) => {
+                  const name = c.name || c.profileName || "Unknown Customer";
+                  const initial = name.charAt(0).toUpperCase();
+                  const { bg, text } = getAvatarColors(name);
+
+                  return (
+                    <tr key={c.id}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "50%",
+                              background: bg,
+                              color: text,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 700,
+                              fontSize: "0.875rem",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {initial}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: "#0f172a" }}>{name}</div>
+                            {c.profileName && c.name && (
+                              <div className="muted tiny">WA: {c.profileName}</div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontFamily: "var(--font-mono)", color: "#334155" }}>
+                          <Smartphone size={14} color="#00a884" />
+                          <span>{c.phone}</span>
+                        </div>
+                      </td>
+                      <td>
+                        {c.email ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#475569", fontSize: "0.8125rem" }}>
+                            <Mail size={13} color="#94a3b8" />
+                            <span>{c.email}</span>
+                          </div>
+                        ) : (
+                          <span className="muted small">—</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="badge badge-approved" style={{ fontSize: "0.6875rem" }}>
+                          <ShieldCheck size={11} />
+                          <span>Opted In</span>
+                        </span>
+                      </td>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                          <button
+                            className="secondary-btn"
+                            style={{ padding: "0.35rem 0.6rem", fontSize: "0.75rem" }}
+                            onClick={() => startEdit(c)}
+                            title="Edit Contact"
+                          >
+                            <Edit3 size={13} />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            className="ghost-btn"
+                            style={{ padding: "0.35rem 0.6rem", fontSize: "0.75rem", color: "#dc2626" }}
+                            onClick={() => void onDelete(c)}
+                            title="Delete Contact"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Edit / Create Contact Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => cancelEdit()}>
+        <div className="modal-overlay" onClick={cancelEdit}>
           <div className="modal modal-narrow" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h2>{editing ? "Edit contact" : "Add contact"}</h2>
-              <button className="link-btn" onClick={() => cancelEdit()}>✕</button>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <UserPlus size={18} color="#00a884" />
+                <h2>{editing ? "Edit Audience Contact" : "Add Audience Contact"}</h2>
+              </div>
+              <button className="ghost-btn" onClick={cancelEdit}>
+                <X size={18} />
+              </button>
             </div>
+
             <form onSubmit={onSubmit} className="form-grid form-single" noValidate>
-          <label>
-            Phone (digits, e.g. 919986439557)
-            <input
-              value={draft.phone}
-              onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
-              required
-              disabled={busy}
-              placeholder="919986439557"
-            />
-            {draft.phone && !phoneValid && (
-              <span className="field-error">Digits only, E.164 style.</span>
-            )}
-          </label>
-          <label>
-            Name (optional)
-            <input
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              maxLength={120}
-              disabled={busy}
-            />
-          </label>
-          <label>
-            Email (optional)
-            <input
-              type="email"
-              value={draft.email}
-              onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-              disabled={busy}
-            />
-            {draft.email.trim() && !emailValid && (
-              <span className="field-error">Enter a valid email.</span>
-            )}
-          </label>
-          <div className="modal-actions">
-            <button type="button" className="ghost-btn" onClick={cancelEdit}>
-              Cancel
-            </button>
-            <button type="submit" disabled={busy || !phoneValid || !emailValid}>
-              {busy ? "Saving…" : editing ? "Save changes" : "Add contact"}
-            </button>
-          </div>
-        </form>
+              <label>
+                Phone Number (E.164 digits, e.g. 15553829920 or 919986439557)
+                <input
+                  value={draft.phone}
+                  onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
+                  required
+                  disabled={busy}
+                  placeholder="e.g. 15553829920"
+                />
+                {draft.phone && !phoneValid && (
+                  <span className="field-error">Digits only with country code, E.164 formatted.</span>
+                )}
+              </label>
+
+              <label>
+                Full Name (Optional)
+                <input
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  placeholder="e.g. Maya Lin"
+                  maxLength={120}
+                  disabled={busy}
+                />
+              </label>
+
+              <label>
+                Email Address (Optional)
+                <input
+                  type="email"
+                  value={draft.email}
+                  onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+                  placeholder="maya@example.com"
+                  disabled={busy}
+                />
+                {draft.email.trim() && !emailValid && (
+                  <span className="field-error">Enter a valid email address.</span>
+                )}
+              </label>
+
+              <div className="modal-actions" style={{ marginTop: "1rem" }}>
+                <button type="button" className="secondary-btn" onClick={cancelEdit}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={busy || !phoneValid || !emailValid}
+                >
+                  {busy ? (
+                    <>
+                      <ButtonSpinner size={14} />
+                      <span>Saving…</span>
+                    </>
+                  ) : editing ? (
+                    "Save Changes"
+                  ) : (
+                    "Add to Audience"
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-
-      <section className="card">
-        <div className="search-box" style={{ padding: 0, border: "none", marginBottom: "0.75rem" }}>
-          <input
-            type="search"
-            placeholder="Search name or phone…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        {contacts.length === 0 ? (
-          <div className="muted">No contacts yet — use Create Contact, or message a customer first.</div>
-        ) : (
-          <table className="tbl">
-            <thead>
-              <tr><th>Name</th><th>Phone</th><th>Email</th><th></th></tr>
-            </thead>
-            <tbody>
-              {contacts.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.name || c.profileName || "—"}</td>
-                  <td className="muted small">{c.phone}</td>
-                  <td className="muted small">{c.email || "—"}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>
-                    <button className="link-btn" onClick={() => startEdit(c)}>Edit</button>
-                    <button className="link-btn danger-text" onClick={() => void onDelete(c)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
     </div>
   );
 }
