@@ -1,0 +1,6 @@
+{
+  "name": "ImmerzoWapi",
+  "description": "A clean, minimalist web application presenting ImmerzoWapi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
