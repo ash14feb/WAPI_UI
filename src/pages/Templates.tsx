@@ -154,9 +154,14 @@ export function TemplatesPage() {
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const [bodyText, setBodyText] = useState("");
   const [footerText, setFooterText] = useState("");
-  const [examples, setExamples] = useState("");
+  const [sampleMap, setSampleMap] = useState<Record<number, string>>({});
   const [codeExpiry, setCodeExpiry] = useState("10");
   const [creating, setCreating] = useState(false);
+
+  function handleAddVariable() {
+    const nextIdx = countVars(bodyText) + 1;
+    setBodyText((prev) => (prev ? `${prev} {{${nextIdx}}}` : `{{${nextIdx}}}`));
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -201,7 +206,7 @@ export function TemplatesPage() {
     setHeaderPreviewUrl(null);
     setBodyText("");
     setFooterText("");
-    setExamples("");
+    setSampleMap({});
     setCodeExpiry("10");
     setServerDetails(null);
   }
@@ -233,7 +238,7 @@ export function TemplatesPage() {
     setServerDetails(null);
     try {
       const varCount = countVars(bodyText);
-      const exList = examples.split(",").map((s) => s.trim()).filter(Boolean);
+      const exList = Array.from({ length: varCount }, (_, i) => (sampleMap[i + 1] ?? "").trim());
       await api("/api/v1/whatsapp/templates", {
         method: "POST",
         body: JSON.stringify({
@@ -268,7 +273,8 @@ export function TemplatesPage() {
   }
 
   const varCount = countVars(bodyText);
-  const exampleList = examples.split(",").map((s) => s.trim()).filter(Boolean);
+  const sampleList = Array.from({ length: varCount }, (_, i) => (sampleMap[i + 1] ?? "").trim());
+  const missingSamples = varCount > 0 && sampleList.some((s) => !s);
 
   interface FieldErrors {
     name?: string;
@@ -278,6 +284,7 @@ export function TemplatesPage() {
     headerMedia?: string;
     footerText?: string;
     examples?: string;
+    codeExpiry?: string;
   }
 
   const fieldErrors: FieldErrors = {};
@@ -291,11 +298,19 @@ export function TemplatesPage() {
   if (isAuth) {
     const mins = Number(codeExpiry);
     if (!Number.isInteger(mins) || mins < 1 || mins > 60) {
-      fieldErrors.examples = "Expiry must be 1–60 minutes.";
+      fieldErrors.codeExpiry = "Expiry must be 1–60 minutes.";
     }
   } else {
-    if (!bodyText.trim()) fieldErrors.bodyText = "Body is required.";
-    else if (bodyText.length > 1024) fieldErrors.bodyText = "Max 1024 characters.";
+    if (!bodyText.trim()) {
+      fieldErrors.bodyText = "Body is required.";
+    } else if (bodyText.length > 1024) {
+      fieldErrors.bodyText = "Max 1024 characters.";
+    } else {
+      const namedMatches = Array.from(bodyText.matchAll(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g));
+      if (namedMatches.some((m) => isNaN(Number(m[1])))) {
+        fieldErrors.bodyText = "Meta requires numbered variables like {{1}}, {{2}} instead of named parameters.";
+      }
+    }
   }
   if (!isAuth && headerFormat === "TEXT" && !headerText.trim()) {
     fieldErrors.headerText = "Header text is required for TEXT headers.";
@@ -306,8 +321,8 @@ export function TemplatesPage() {
       fieldErrors.headerMedia = `Upload a sample ${headerFormat.toLowerCase()} — Meta requires it to review media headers.`;
     }
     if (footerText.length > 60) fieldErrors.footerText = "Max 60 characters.";
-    if (varCount > 0 && exampleList.length !== varCount) {
-      fieldErrors.examples = `Body has ${varCount} variable(s) — provide exactly ${varCount} sample value(s).`;
+    if (missingSamples) {
+      fieldErrors.examples = `Provide sample values for all ${varCount} variable(s). Meta requires real examples to approve templates.`;
     }
   }
 
@@ -643,30 +658,126 @@ export function TemplatesPage() {
 
                 {!isAuth ? (
                   <>
-                    <label className="span-2">
-                      Body Message Text
-                      <textarea
-                        rows={4}
-                        value={bodyText}
-                        onChange={(e) => setBodyText(e.target.value)}
-                        placeholder="Hi {{1}}, your order #{{2}} is ready for dispatch."
-                        required
-                        maxLength={1024}
-                      />
-                      {fieldErrors.bodyText && <span className="field-error">{fieldErrors.bodyText}</span>}
-                    </label>
+                    <div className="span-2" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+                      <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>Body Message Text</span>
+                      <button
+                        type="button"
+                        className="ghost-btn"
+                        style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "#00a884" }}
+                        onClick={handleAddVariable}
+                        title="Insert next variable placeholder"
+                      >
+                        <Plus size={13} />
+                        <span>Add Variable {`{{${varCount + 1}}}`}</span>
+                      </button>
+                    </div>
 
-                    {varCount > 0 && (
-                      <label className="span-2">
-                        Sample Variable Values (comma-separated, {varCount} required)
-                        <input
-                          value={examples}
-                          onChange={(e) => setExamples(e.target.value)}
-                          placeholder="e.g. Sarah, ORD-9921"
-                        />
-                        {fieldErrors.examples && <span className="field-error">{fieldErrors.examples}</span>}
-                      </label>
-                    )}
+                    <textarea
+                      className="span-2"
+                      rows={4}
+                      value={bodyText}
+                      onChange={(e) => setBodyText(e.target.value)}
+                      placeholder="Hi {{1}}, your order #{{2}} is ready for dispatch."
+                      required
+                      maxLength={1024}
+                    />
+                    {fieldErrors.bodyText && <span className="field-error span-2">{fieldErrors.bodyText}</span>}
+
+                    {/* Always visible Sample Values section */}
+                    <div
+                      className="span-2"
+                      style={{
+                        background: varCount > 0 ? "#f0fdf4" : "#f8fafc",
+                        border: `1px solid ${varCount > 0 ? "#bbf7d0" : "var(--border)"}`,
+                        borderRadius: "10px",
+                        padding: "0.875rem",
+                        marginTop: "0.25rem",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: varCount > 0 ? "0.625rem" : "0" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                          <Sparkles size={16} color={varCount > 0 ? "#16a34a" : "#64748b"} />
+                          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: varCount > 0 ? "#15803d" : "#334155" }}>
+                            Sample Values (Meta Requirement)
+                          </span>
+                          {varCount > 0 && (
+                            <span className="badge badge-approved" style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem" }}>
+                              {varCount} variable{varCount > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        {varCount > 0 && (
+                          <button
+                            type="button"
+                            className="ghost-btn"
+                            style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", color: "#00a884" }}
+                            onClick={handleAddVariable}
+                          >
+                            <Plus size={12} /> Add {`{{${varCount + 1}}}`}
+                          </button>
+                        )}
+                      </div>
+
+                      {varCount === 0 ? (
+                        <div style={{ fontSize: "0.8125rem", color: "#64748b", lineHeight: 1.5, marginTop: "0.35rem" }}>
+                          Meta requires realistic sample values for every dynamic variable in your template (e.g. <code>{"{{1}}"}</code> for customer name, <code>{"{{2}}"}</code> for order ID).
+                          <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <span>Click to insert a variable:</span>
+                            <button
+                              type="button"
+                              className="ghost-btn"
+                              style={{
+                                padding: "0.25rem 0.6rem",
+                                fontSize: "0.75rem",
+                                background: "#ffffff",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: "6px",
+                                color: "#00a884",
+                                fontWeight: 600,
+                              }}
+                              onClick={handleAddVariable}
+                            >
+                              <Plus size={13} /> Add Variable {"{{1}}"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="muted tiny" style={{ marginBottom: "0.625rem" }}>
+                            Provide representative sample text for each variable. Meta uses these to verify compliance and format approval.
+                          </div>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: varCount > 1 ? "repeat(auto-fit, minmax(180px, 1fr))" : "1fr",
+                              gap: "0.625rem",
+                            }}
+                          >
+                            {Array.from({ length: varCount }, (_, i) => i + 1).map((idx) => (
+                              <div key={idx} style={{ background: "#ffffff", padding: "0.625rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                                <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#334155", display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+                                  <span>Sample for {`{{${idx}}}`}</span>
+                                  <span className="muted" style={{ fontWeight: 400 }}>Required</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={sampleMap[idx] ?? ""}
+                                  onChange={(e) => setSampleMap((prev) => ({ ...prev, [idx]: e.target.value }))}
+                                  placeholder={idx === 1 ? "e.g. Sarah" : idx === 2 ? "e.g. ORD-9921" : `e.g. Sample ${idx}`}
+                                  style={{ width: "100%", fontSize: "0.8125rem", padding: "0.4rem 0.6rem", marginTop: 0 }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          {fieldErrors.examples && (
+                            <span className="field-error" style={{ display: "block", marginTop: "0.5rem" }}>
+                              {fieldErrors.examples}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     <label className="span-2">
                       Footer Text (Optional)
@@ -689,7 +800,7 @@ export function TemplatesPage() {
                       value={codeExpiry}
                       onChange={(e) => setCodeExpiry(e.target.value)}
                     />
-                    {fieldErrors.examples && <span className="field-error">{fieldErrors.examples}</span>}
+                    {fieldErrors.codeExpiry && <span className="field-error">{fieldErrors.codeExpiry}</span>}
                   </label>
                 )}
 
@@ -743,7 +854,7 @@ export function TemplatesPage() {
                         )}
                         <div className="bubble-text">
                           {bodyText.trim() ? (
-                            renderPreview(bodyText, varCount > 0 ? exampleList : [])
+                            renderPreview(bodyText, varCount > 0 ? sampleList : [])
                           ) : (
                             <span className="muted">Your message text appears here…</span>
                           )}

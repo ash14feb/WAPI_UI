@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api/client";
-import type { DashboardSummary } from "../api/types";
+import type { Conversation, DashboardSummary } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { PageLoader } from "../components/Loader";
 import {
@@ -57,14 +57,19 @@ function StatCard({ label, value, sub, to, theme, icon: Icon, trend }: StatCardP
 export function DashboardPage() {
   const { tenant } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api<DashboardSummary>("/api/v1/dashboard/summary");
+      const [data, convs] = await Promise.all([
+        api<DashboardSummary>("/api/v1/dashboard/summary"),
+        api<Conversation[]>("/api/v1/conversations").catch(() => []),
+      ]);
       setSummary(data);
+      setConversations(convs);
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load dashboard summary");
@@ -170,14 +175,14 @@ export function DashboardPage() {
                 <div className="account-pill-grid">
                   <div className="account-pill-item">
                     <span className="label">Registered Business</span>
-                    <span className="val">{summary.whatsapp.businessName ?? "Immerzo Technologies"}</span>
+                    <span className="val">{summary.whatsapp.businessName || tenant?.name || "Connected WABA"}</span>
                   </div>
 
                   <div className="account-pill-item">
                     <span className="label">Display Phone</span>
                     <span className="val" style={{ fontFamily: "var(--font-mono)" }}>
                       <Smartphone size={15} color="#00a884" />
-                      {summary.whatsapp.displayPhoneNumber ?? "+1 (555) 382-9920"}
+                      {summary.whatsapp.displayPhoneNumber || "—"}
                     </span>
                   </div>
 
@@ -402,89 +407,61 @@ export function DashboardPage() {
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
-                <Link
-                  to="/inbox"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "0.75rem",
-                    borderRadius: "10px",
-                    background: "#f8fafc",
-                    border: "1px solid var(--border)",
-                    textDecoration: "none",
-                    color: "inherit",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-                    <div
-                      style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "50%",
-                        background: "#e2e8f0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "0.875rem",
-                        color: "#334155",
-                      }}
-                    >
-                      P
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>Priya Sharma</div>
-                      <div className="muted tiny ellipsis" style={{ maxWidth: "160px" }}>
-                        Could you also share the API onboarding doc...
-                      </div>
-                    </div>
+                {conversations.length === 0 ? (
+                  <div className="muted small" style={{ textAlign: "center", padding: "1.5rem 0.5rem" }}>
+                    No conversations yet. Inbound customer chats will appear here.
                   </div>
-                  <span className="unread-badge">1</span>
-                </Link>
-
-                <Link
-                  to="/inbox"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "0.75rem",
-                    borderRadius: "10px",
-                    background: "#ffffff",
-                    border: "1px solid var(--border-subtle)",
-                    textDecoration: "none",
-                    color: "inherit",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-                    <div
-                      style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "50%",
-                        background: "#e2e8f0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "0.875rem",
-                        color: "#334155",
-                      }}
-                    >
-                      S
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>Dr. Sarah Jenkins</div>
-                      <div className="muted tiny ellipsis" style={{ maxWidth: "160px" }}>
-                        Your appointment confirmation with Dr. Sarah...
-                      </div>
-                    </div>
-                  </div>
-                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>45m ago</span>
-                </Link>
+                ) : (
+                  conversations.slice(0, 3).map((c) => {
+                    const cName = c.contact.name || c.contact.profileName || c.contact.phone;
+                    const cInitial = cName.charAt(0).toUpperCase();
+                    const lastMsg = c.lastMessage?.textContent || "No messages yet";
+                    return (
+                      <Link
+                        key={c.id}
+                        to={`/inbox/${c.id}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "0.75rem",
+                          borderRadius: "10px",
+                          background: "#f8fafc",
+                          border: "1px solid var(--border)",
+                          textDecoration: "none",
+                          color: "inherit",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+                          <div
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "50%",
+                              background: "#e2e8f0",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 700,
+                              fontSize: "0.875rem",
+                              color: "#334155",
+                            }}
+                          >
+                            {cInitial}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{cName}</div>
+                            <div className="muted tiny ellipsis" style={{ maxWidth: "160px" }}>
+                              {lastMsg}
+                            </div>
+                          </div>
+                        </div>
+                        {c.unreadCount > 0 && <span className="unread-badge">{c.unreadCount}</span>}
+                      </Link>
+                    );
+                  })
+                )}
               </div>
 
               <div style={{ marginTop: "1.25rem" }}>

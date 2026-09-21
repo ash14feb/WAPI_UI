@@ -1,16 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, ApiError } from "../api/client";
+import { api, ApiError, API_URL } from "../api/client";
 import type { WhatsappAccount } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
-import {
-  ShieldCheck,
-  Eye,
-  EyeOff,
-  Building,
-  Webhook,
-  CheckCircle2,
-  Copy,
-} from "lucide-react";
+import { ShieldCheck, Eye, EyeOff, Building } from "lucide-react";
 
 function maskPhone(phone: string | null): string {
   if (!phone) return "—";
@@ -19,9 +11,10 @@ function maskPhone(phone: string | null): string {
   return `+${digits.slice(0, 2)} XXXXX ${digits.slice(-5)}`;
 }
 
-function maskWaba(waba: string): string {
-  if (waba.length <= 4) return "************";
-  return `${"*".repeat(Math.max(0, waba.length - 4))}${waba.slice(-4)}`;
+function maskId(val: string | null): string {
+  if (!val) return "—";
+  if (val.length <= 4) return "************";
+  return `${"*".repeat(Math.max(0, val.length - 4))}${val.slice(-4)}`;
 }
 
 export function SettingsPage() {
@@ -29,7 +22,6 @@ export function SettingsPage() {
   const [accounts, setAccounts] = useState<WhatsappAccount[]>([]);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -51,12 +43,6 @@ export function SettingsPage() {
       else next.add(id);
       return next;
     });
-  }
-
-  function copyText(val: string, keyName: string) {
-    navigator.clipboard.writeText(val);
-    setCopiedKey(keyName);
-    setTimeout(() => setCopiedKey(null), 2000);
   }
 
   return (
@@ -125,7 +111,7 @@ export function SettingsPage() {
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <span style={{ fontWeight: 700, fontSize: "1.125rem", color: "#0f172a" }}>
-                          {a.businessName ?? "Immerzo Technologies"}
+                          {a.businessName || tenant?.name || "WhatsApp Business Account"}
                         </span>
                         <span className={`badge badge-${connected ? "approved" : "rejected"}`}>
                           {connected ? "● Connected" : "● Offline"}
@@ -162,7 +148,16 @@ export function SettingsPage() {
                         Display Phone Number
                       </div>
                       <div style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: "#0f172a", marginTop: "0.25rem" }}>
-                        {show ? (a.displayPhoneNumber ?? "+1 555-382-9920") : maskPhone(a.displayPhoneNumber)}
+                        {show ? (a.displayPhoneNumber || "—") : maskPhone(a.displayPhoneNumber)}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>
+                        Phone Number ID
+                      </div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem", color: "#475569", marginTop: "0.25rem" }}>
+                        {show ? a.phoneNumberId : maskId(a.phoneNumberId)}
                       </div>
                     </div>
 
@@ -171,25 +166,16 @@ export function SettingsPage() {
                         WABA Account ID
                       </div>
                       <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem", color: "#475569", marginTop: "0.25rem" }}>
-                        {show ? a.wabaId : maskWaba(a.wabaId)}
+                        {show ? a.wabaId : maskId(a.wabaId)}
                       </div>
                     </div>
 
                     <div>
                       <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>
-                        Messaging Tier
+                        Account Status
                       </div>
-                      <div style={{ fontWeight: 600, color: "#00a884", marginTop: "0.25rem" }}>
-                        Tier 2 (100k msgs / 24h)
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>
-                        Quality Score
-                      </div>
-                      <div style={{ fontWeight: 600, color: "#16a34a", marginTop: "0.25rem" }}>
-                        High (Green)
+                      <div style={{ fontWeight: 600, color: a.status === "ACTIVE" ? "#16a34a" : "#00a884", marginTop: "0.25rem" }}>
+                        {a.status || "ACTIVE"}
                       </div>
                     </div>
                   </div>
@@ -199,92 +185,6 @@ export function SettingsPage() {
           )}
         </section>
 
-        {/* Webhook Configuration Card */}
-        <section className="card" style={{ marginBottom: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h2>
-              <Webhook size={18} color="#00a884" />
-              <span>Meta Webhook Integration</span>
-            </h2>
-            <span className="badge badge-approved">
-              <CheckCircle2 size={11} />
-              <span>Verified</span>
-            </span>
-          </div>
-
-          <p className="muted small" style={{ margin: "0 0 1rem" }}>
-            Configure these parameters inside your Meta Developer App &gt; WhatsApp &gt; Configuration:
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <div>
-              <div className="muted tiny" style={{ fontWeight: 700, textTransform: "uppercase" }}>Callback URL</div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "#f8fafc",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "8px",
-                  border: "1px solid var(--border)",
-                  marginTop: "0.25rem",
-                }}
-              >
-                <span className="mono small ellipsis">{window.location.origin}/api/v1/whatsapp/webhook</span>
-                <button
-                  className="ghost-btn"
-                  style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
-                  onClick={() => copyText(`${window.location.origin}/api/v1/whatsapp/webhook`, "url")}
-                >
-                  <Copy size={13} />
-                  <span>{copiedKey === "url" ? "Copied!" : "Copy"}</span>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="muted tiny" style={{ fontWeight: 700, textTransform: "uppercase" }}>Verify Token</div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "#f8fafc",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "8px",
-                  border: "1px solid var(--border)",
-                  marginTop: "0.25rem",
-                }}
-              >
-                <span className="mono small">immerzo_wapi_verify_secret</span>
-                <button
-                  className="ghost-btn"
-                  style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
-                  onClick={() => copyText("immerzo_wapi_verify_secret", "token")}
-                >
-                  <Copy size={13} />
-                  <span>{copiedKey === "token" ? "Copied!" : "Copy"}</span>
-                </button>
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
-                borderRadius: "8px",
-                padding: "0.75rem",
-                fontSize: "0.75rem",
-                color: "#15803d",
-                marginTop: "0.25rem",
-              }}
-            >
-              Subscription fields active: <code>messages</code>, <code>message_template_status_update</code>, <code>phone_number_quality_update</code>.
-            </div>
-          </div>
-        </section>
-
         {/* Workspace & Org Profile Card */}
         <section className="card" style={{ marginBottom: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
@@ -292,7 +192,7 @@ export function SettingsPage() {
               <Building size={18} color="#00a884" />
               <span>Workspace & Security</span>
             </h2>
-            <span className="badge badge-draft">Production</span>
+            <span className="badge badge-approved">Active</span>
           </div>
 
           <p className="muted small" style={{ margin: "0 0 1rem" }}>
@@ -302,12 +202,12 @@ export function SettingsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--border)" }}>
               <span className="muted small">Workspace Name</span>
-              <strong style={{ fontSize: "0.875rem" }}>{tenant?.name ?? "Immerzo Enterprise"}</strong>
+              <strong style={{ fontSize: "0.875rem" }}>{tenant?.name || "Workspace"}</strong>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--border)" }}>
               <span className="muted small">Admin Account</span>
-              <span style={{ fontSize: "0.875rem", color: "#334155" }}>{user?.email ?? "admin@immerzo.io"}</span>
+              <span style={{ fontSize: "0.875rem", color: "#334155" }}>{user?.email || "—"}</span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--border)" }}>
@@ -316,8 +216,8 @@ export function SettingsPage() {
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0" }}>
-              <span className="muted small">Local Mock Store Mode</span>
-              <span style={{ fontSize: "0.875rem", color: "#00a884", fontWeight: 600 }}>High-Fidelity Preview Active</span>
+              <span className="muted small">Connected API Endpoint</span>
+              <span className="mono" style={{ fontSize: "0.8125rem", color: "#00a884", fontWeight: 600 }}>{API_URL}</span>
             </div>
           </div>
         </section>

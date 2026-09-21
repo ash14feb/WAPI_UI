@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
-import { getAccessToken } from "../api/client";
+import { API_URL, getAccessToken } from "../api/client";
 import type { Message } from "../api/types";
-
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000";
 
 export interface RealtimeMessageEvent {
   type: "message.created" | "message.updated";

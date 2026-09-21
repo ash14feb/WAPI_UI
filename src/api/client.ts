@@ -1,6 +1,7 @@
 import type { ApiResult } from "./types";
+import { sanitizeData } from "../utils/textUtils";
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "https://wapiapi.vercel.app";
+export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "https://wapiapi.vercel.app";
 
 const ACCESS_KEY = "wa.accessToken";
 const REFRESH_KEY = "wa.refreshToken";
@@ -44,20 +45,41 @@ async function refreshAccessToken(): Promise<boolean> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
-    const json = (await res.json()) as ApiResult<{ accessToken: string }>;
-    if (!json.success) return false;
-    localStorage.setItem(ACCESS_KEY, json.data.accessToken);
+    if (!res.ok) return false;
+    const json = (await res.json()) as { success?: boolean; data?: { accessToken: string }; accessToken?: string };
+    const token = json.data?.accessToken ?? json.accessToken;
+    if (!token) return false;
+    localStorage.setItem(ACCESS_KEY, token);
     return true;
   } catch {
     return false;
   }
 }
 
-export async function api<T>(path: string, init: RequestInit = {}, retried = false): Promise<T> {  const headers: Record<string, string> = { "Content-Type": "application/json" };
+export async function api<T>(path: string, init: RequestInit = {}, retried = false): Promise<T> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   const token = getAccessToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...init, headers: { ...headers, ...init.headers } });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: { ...headers, ...init.headers },
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new ApiError("TIMEOUT", "Request timed out after 20 seconds. Please check your network connection.", 408);
+    }
+    const msg = err instanceof Error ? err.message : "Network error";
+    throw new ApiError("NETWORK_ERROR", `Failed to connect to ${API_URL}: ${msg}`, 0);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (res.status === 401 && !retried && getRefreshToken()) {
     const ok = await refreshAccessToken();
@@ -65,16 +87,36 @@ export async function api<T>(path: string, init: RequestInit = {}, retried = fal
     clearTokens();
   }
 
-  let json: ApiResult<T>;
-  try {
-    json = (await res.json()) as ApiResult<T>;
-  } catch {
-    throw new ApiError("NETWORK_ERROR", "Unable to reach the server", res.status);
+  let json: unknown;
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try {
+      json = await res.json();
+    } catch {
+      json = null;
+    }
   }
-  if (!json.success) {
-    throw new ApiError(json.error.code, json.error.message, res.status, json.error.details);
+
+  if (!res.ok) {
+    const errObj = json as { success?: boolean; error?: { code?: string; message?: string; details?: unknown }; message?: string } | null;
+    const code = errObj?.error?.code ?? `HTTP_${res.status}`;
+    const message = errObj?.error?.message ?? errObj?.message ?? `Request failed with status ${res.status}`;
+    const details = errObj?.error?.details;
+    throw new ApiError(code, message, res.status, details);
   }
-  return json.data;
+
+  // Handle standard envelope { success: true, data: T }
+  const envelope = json as ApiResult<T> | null;
+  if (envelope && typeof envelope === "object" && "success" in envelope) {
+    if (!envelope.success) {
+      const err = envelope as unknown as { error?: { code?: string; message?: string; details?: unknown } };
+      throw new ApiError(err.error?.code ?? "ERROR", err.error?.message ?? "API reported failure", res.status, err.error?.details);
+    }
+    return sanitizeData(envelope.data);
+  }
+
+  // If the backend returns data directly
+  return sanitizeData(json as T);
 }
 
 export interface UploadResult {
@@ -83,30 +125,32 @@ export interface UploadResult {
   size: number;
 }
 
-/** Multipart upload (FormData); auth via Bearer header, with one 401 retry.
- * purpose "send" (default) returns a numeric media id for send payloads;
- * purpose "sample" returns a resumable handle for template creation. */
-export async function uploadFile(path: string, file: File, purpose: "send" | "sample" = "send"): Promise<UploadResult> {
-  const doUpload = async (): Promise<Response> => {
-    const form = new FormData();
-    form.append("file", file);
-    const headers: Record<string, string> = {};
-    const token = getAccessToken();
-    if (token) headers.Authorization = `Bearer ${token}`;
-    return fetch(`${API_URL}${path}?purpose=${purpose}`, { method: "POST", headers, body: form });
-  };
+export async function uploadFile(
+  path: string,
+  file: File,
+  purpose: "send" | "sample" = "send",
+): Promise<UploadResult> {
+  const form = new FormData();
+  form.append("file", file);
+  const headers: Record<string, string> = {};
+  const token = getAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
 
-  let res = await doUpload();
-  if (res.status === 401 && getRefreshToken()) {
-    const ok = await refreshAccessToken();
-    if (ok) res = await doUpload();
+  const res = await fetch(`${API_URL}${path}?purpose=${purpose}`, {
+    method: "POST",
+    headers,
+    body: form,
+  });
+
+  const json = (await res.json()) as { success?: boolean; data?: UploadResult; handle?: string; mimeType?: string; size?: number; error?: { code?: string; message?: string } };
+  if (!res.ok || json.success === false) {
+    const msg = json.error?.message ?? "Media upload failed";
+    throw new ApiError(json.error?.code ?? `HTTP_${res.status}`, msg, res.status);
   }
-  let json: ApiResult<UploadResult>;
-  try {
-    json = (await res.json()) as ApiResult<UploadResult>;
-  } catch {
-    throw new ApiError("NETWORK_ERROR", "Unable to reach the server", res.status);
-  }
-  if (!json.success) throw new ApiError(json.error.code, json.error.message, res.status, json.error.details);
-  return json.data;
+  if (json.data) return json.data;
+  return {
+    handle: json.handle ?? "",
+    mimeType: json.mimeType ?? file.type,
+    size: json.size ?? file.size,
+  };
 }
