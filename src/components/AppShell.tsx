@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { accountLabel, useAccounts } from "../accounts/AccountContext";
-import { Building2, ChevronDown, Menu, Zap } from "lucide-react";
+import { Building2, ChevronDown, Menu } from "lucide-react";
 
 function AccountSwitcher() {
   const { accounts, selectedId, select, loading } = useAccounts();
@@ -118,23 +118,6 @@ export function AppShell() {
             <div className="top-meta-badge header-badge-desktop">
               <span className="pulse-dot" />
               <span>Meta Cloud API v20.0 • Connected</span>
-            </div>
-            <div
-              className="header-badge-desktop"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.4rem",
-                fontSize: "0.75rem",
-                color: "#64748b",
-                fontWeight: 600,
-                background: "#f1f5f9",
-                padding: "0.35rem 0.65rem",
-                borderRadius: "9999px",
-              }}
-            >
-              <Zap size={13} color="#00a884" />
-              <span>Quality: High</span>
             </div>
           </div>
         </header>

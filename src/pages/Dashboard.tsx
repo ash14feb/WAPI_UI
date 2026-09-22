@@ -16,7 +16,6 @@ import {
   Sparkles,
   Plus,
   RefreshCw,
-  Zap,
   Activity,
   ChevronRight,
   ExternalLink,
@@ -183,21 +182,6 @@ export function DashboardPage() {
                     <span className="val" style={{ fontFamily: "var(--font-mono)" }}>
                       <Smartphone size={15} color="#00a884" />
                       {summary.whatsapp.displayPhoneNumber || "—"}
-                    </span>
-                  </div>
-
-                  <div className="account-pill-item">
-                    <span className="label">Tier Limit</span>
-                    <span className="val">
-                      <Zap size={14} color="#f59e0b" />
-                      Tier 2 (100k / 24h)
-                    </span>
-                  </div>
-
-                  <div className="account-pill-item">
-                    <span className="label">Quality Rating</span>
-                    <span className="val" style={{ color: "#10b981" }}>
-                      ● High (Green)
                     </span>
                   </div>
                 </div>
