@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, ApiError } from "../api/client";
+import { api, ApiError, asArray } from "../api/client";
 import type { Conversation, DashboardSummary } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { PageLoader } from "../components/Loader";
@@ -66,10 +66,10 @@ export function DashboardPage() {
     try {
       const [data, convs] = await Promise.all([
         api<DashboardSummary>("/api/v1/dashboard/summary"),
-        api<Conversation[]>("/api/v1/conversations").catch(() => []),
+        api<Conversation[] | { items: Conversation[] }>("/api/v1/conversations").catch(() => [] as Conversation[]),
       ]);
       setSummary(data);
-      setConversations(convs);
+      setConversations(asArray(convs));
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load dashboard summary");

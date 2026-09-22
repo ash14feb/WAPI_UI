@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { api, ApiError } from "../api/client";
+import { api, ApiError, asArray } from "../api/client";
 import type { Contact } from "../api/types";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
 import {
@@ -54,7 +54,7 @@ export function ContactsPage() {
     setLoading(true);
     try {
       setContacts(
-        await api<Contact[]>(`/api/v1/contacts${q.trim() ? `?search=${encodeURIComponent(q.trim())}` : ""}`),
+        asArray(await api<Contact[] | { items: Contact[] }>(`/api/v1/contacts${q.trim() ? `?search=${encodeURIComponent(q.trim())}` : ""}`)),
       );
       setError(null);
     } catch (err) {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router-dom";
-import { api, ApiError } from "../api/client";
+import { api, ApiError, asArray } from "../api/client";
 import type { Conversation } from "../api/types";
 import { useRealtime } from "../realtime/useRealtime";
 import { LoadingSpinner } from "../components/Loader";
@@ -85,10 +85,10 @@ export function InboxPage() {
 
   const load = useCallback(async () => {
     try {
-      const data = await api<Conversation[]>(
+      const data = await api<Conversation[] | { items: Conversation[] }>(
         `/api/v1/conversations${debounced ? `?search=${encodeURIComponent(debounced)}` : ""}`,
       );
-      setConversations(data);
+      setConversations(asArray(data));
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load conversations");

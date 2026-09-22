@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, ApiError, uploadFile } from "../api/client";
+import { api, ApiError, asArray, uploadFile } from "../api/client";
 import type { Campaign, Contact, MessageTemplate } from "../api/types";
 import { countVars, extractBodyText, extractHeader, renderPreview } from "../inbox/templatePreview";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
@@ -44,10 +44,10 @@ export function CampaignsPage() {
     setLoading(true);
     try {
       const [c, t] = await Promise.all([
-        api<Campaign[]>("/api/v1/campaigns"),
+        api<Campaign[] | { items: Campaign[] }>("/api/v1/campaigns"),
         api<MessageTemplate[]>("/api/v1/whatsapp/templates"),
       ]);
-      setCampaigns(c);
+      setCampaigns(asArray(c));
       setTemplates(t.filter((x) => x.status === "APPROVED"));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load campaigns");
@@ -64,8 +64,10 @@ export function CampaignsPage() {
     const t = setTimeout(async () => {
       try {
         setContacts(
-          await api<Contact[]>(
-            `/api/v1/contacts${contactSearch.trim() ? `?search=${encodeURIComponent(contactSearch.trim())}` : ""}`,
+          asArray(
+            await api<Contact[] | { items: Contact[] }>(
+              `/api/v1/contacts${contactSearch.trim() ? `?search=${encodeURIComponent(contactSearch.trim())}` : ""}`,
+            ),
           ),
         );
       } catch {

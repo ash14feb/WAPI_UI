@@ -125,6 +125,15 @@ export interface UploadResult {
   size: number;
 }
 
+/** Backend paginated shape { items, nextCursor } — accepts legacy bare arrays too. */
+export function asArray<T>(data: T[] | { items: T[] } | null | undefined): T[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object" && Array.isArray((data as { items?: unknown }).items)) {
+    return (data as { items: T[] }).items;
+  }
+  return [];
+}
+
 export async function uploadFile(
   path: string,
   file: File,

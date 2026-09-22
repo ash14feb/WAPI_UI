@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useOutletContext, useParams } from "react-router-dom";
-import { api, ApiError, uploadFile } from "../api/client";
+import { api, ApiError, asArray, uploadFile } from "../api/client";
 import type { Conversation, Message } from "../api/types";
 import { useRealtime } from "../realtime/useRealtime";
 import type { RealtimeEvent } from "../realtime/useRealtime";
@@ -143,10 +143,10 @@ export function ConversationView() {
     try {
       const [conv, msgs] = await Promise.all([
         api<Conversation>(`/api/v1/conversations/${conversationId}`),
-        api<Message[]>(`/api/v1/conversations/${conversationId}/messages`),
+        api<Message[] | { items: Message[] }>(`/api/v1/conversations/${conversationId}/messages`),
       ]);
       setConversation(conv);
-      setMessages(msgs);
+      setMessages(asArray(msgs));
       markSeen(conversationId);
       setError(null);
     } catch (err) {
