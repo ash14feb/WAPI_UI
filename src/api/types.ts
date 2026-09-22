@@ -57,6 +57,7 @@ export interface Conversation {
   status: string;
   lastMessageAt: string | null;
   contact: Contact;
+  whatsappAccount?: { id: string; businessName: string | null; displayPhoneNumber: string | null } | null;
   lastMessage: Message | null;
   unreadCount: number;
 }

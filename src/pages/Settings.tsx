@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, ApiError, API_URL } from "../api/client";
+import { api, ApiError, asArray, API_URL } from "../api/client";
 import type { WhatsappAccount } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
-import { ShieldCheck, Eye, EyeOff, Building } from "lucide-react";
+import { useAccounts } from "../accounts/AccountContext";
+import { ShieldCheck, Eye, EyeOff, Building, Plus } from "lucide-react";
 
 function maskPhone(phone: string | null): string {
   if (!phone) return "—";
@@ -17,20 +18,99 @@ function maskId(val: string | null): string {
   return `${"*".repeat(Math.max(0, val.length - 4))}${val.slice(-4)}`;
 }
 
+declare global {
+  interface Window {
+    FB?: {
+      init: (opts: { appId: string; version: string; xfbml?: boolean }) => void;
+      login: (
+        cb: (resp: { authResponse?: { code?: string } }) => void,
+        opts: {
+          config_id: string;
+          response_type: string;
+          override_default_response_type?: boolean;
+          scope: string;
+          extras?: Record<string, unknown>;
+        },
+      ) => void;
+    };
+    fbAsyncInit?: () => void;
+  }
+}
+
+function loadFacebookSdk(): Promise<void> {
+  if (window.FB) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    window.fbAsyncInit = () => resolve();
+    const script = document.createElement("script");
+    script.src = "https://connect.facebook.net/en_US/sdk.js";
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = "anonymous";
+    script.onerror = () => reject(new Error("Facebook SDK failed to load"));
+    document.head.appendChild(script);
+    setTimeout(() => reject(new Error("Facebook SDK timed out")), 15000);
+  });
+}
+
 export function SettingsPage() {
   const { tenant, user } = useAuth();
+  const { refresh: refreshAccounts } = useAccounts();
   const [accounts, setAccounts] = useState<WhatsappAccount[]>([]);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      setAccounts(await api<WhatsappAccount[]>("/api/v1/whatsapp/accounts"));
+      setAccounts(asArray(await api<WhatsappAccount[] | { items: WhatsappAccount[] }>("/api/v1/whatsapp/accounts")));
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load settings");
     }
   }, []);
+
+  /** Embedded Signup: FB popup → code → backend exchange/subscribe/register. */
+  const connectWhatsapp = useCallback(async () => {
+    setConnecting(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const cfg = await api<{ appId: string; configId: string; graphVersion: string }>(
+        "/api/v1/whatsapp/onboarding/config",
+      );
+      if (!cfg.appId || !cfg.configId) {
+        throw new Error("Embedded Signup is not configured (META_APP_ID / META_CONFIG_ID missing on server)");
+      }
+      await loadFacebookSdk();
+      window.FB!.init({ appId: cfg.appId, version: cfg.graphVersion || "v21.0", xfbml: false });
+      const code = await new Promise<string>((resolve, reject) => {
+        window.FB!.login(
+          (resp) => {
+            if (resp.authResponse?.code) resolve(resp.authResponse.code);
+            else reject(new Error("Signup was cancelled or no code returned"));
+          },
+          {
+            config_id: cfg.configId,
+            response_type: "code",
+            override_default_response_type: true,
+            scope: "whatsapp_business_management,whatsapp_business_messaging",
+            extras: { feature: "whatsapp_embedded_signup", version: 2 },
+          },
+        );
+      });
+      const result = await api<{ accounts: WhatsappAccount[] }>(`/api/v1/whatsapp/onboarding/complete`, {
+        method: "POST",
+        body: JSON.stringify({ code }),
+      });
+      await Promise.all([load(), refreshAccounts()]);
+      setNotice(`Connected ${result.accounts.length} number(s). They now appear in the top-bar switcher.`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Connect failed");
+    } finally {
+      setConnecting(false);
+    }
+  }, [load, refreshAccounts]);
 
   useEffect(() => {
     void load();
@@ -77,6 +157,11 @@ export function SettingsPage() {
       </header>
 
       {error && <div className="error">{error}</div>}
+      {notice && (
+        <div style={{ background: "#e6f7f3", color: "#047857", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem", fontWeight: 600 }}>
+          {notice}
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
         {/* Connected WhatsApp Account Card */}
@@ -86,7 +171,19 @@ export function SettingsPage() {
               <ShieldCheck size={20} color="#00a884" />
               <span>Connected WhatsApp Business Accounts</span>
             </h2>
-            <span className="badge badge-approved">Official Cloud API</span>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <span className="badge badge-approved">Official Cloud API</span>
+              <button
+                className="primary-btn"
+                style={{ fontSize: "0.8rem", padding: "0.45rem 0.9rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                onClick={() => void connectWhatsapp()}
+                disabled={connecting}
+                title="Connect another number via Facebook Embedded Signup"
+              >
+                <Plus size={15} />
+                <span>{connecting ? "Connecting…" : accounts.length === 0 ? "Connect WhatsApp" : "Connect another number"}</span>
+              </button>
+            </div>
           </div>
 
           {accounts.length === 0 && !error && <div className="muted">Loading accounts…</div>}

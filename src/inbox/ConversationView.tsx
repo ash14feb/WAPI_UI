@@ -287,6 +287,11 @@ export function ConversationView() {
             <div className="muted tiny" style={{ fontFamily: "var(--font-mono)", color: "#64748b" }}>
               {conversation?.contact.phone}
             </div>
+            {conversation?.whatsappAccount && (
+              <div className="tiny" style={{ color: "#00a884", fontWeight: 700, marginTop: "0.15rem" }}>
+                Replies send from {conversation.whatsappAccount.businessName || conversation.whatsappAccount.displayPhoneNumber || "this number"}
+              </div>
+            )}
           </div>
         </div>
 

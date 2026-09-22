@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError, asArray, uploadFile } from "../api/client";
+import { useAccounts } from "../accounts/AccountContext";
 import type { Campaign, Contact, MessageTemplate } from "../api/types";
 import { countVars, extractBodyText, extractHeader, renderPreview } from "../inbox/templatePreview";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
@@ -20,6 +21,7 @@ import {
 
 export function CampaignsPage() {
   const navigate = useNavigate();
+  const { selectedId } = useAccounts();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -144,6 +146,7 @@ export function CampaignsPage() {
           name: name.trim(),
           templateId,
           contactIds: [...selected],
+          ...(selectedId ? { whatsappAccountId: selectedId } : {}),
           parameters: params.length > 0 ? params : undefined,
           headerMedia:
             needsHeaderMedia && header

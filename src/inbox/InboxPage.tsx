@@ -209,6 +209,11 @@ export function InboxPage() {
                         <span className="conv-name">{name}</span>
                         <span className="conv-time">{timeAgo(c.lastMessageAt)}</span>
                       </div>
+                      {c.whatsappAccount && (
+                        <div className="tiny" style={{ color: "#00a884", fontWeight: 700, marginTop: "0.1rem" }} title={`Via ${c.whatsappAccount.businessName ?? ""} ${c.whatsappAccount.displayPhoneNumber ?? ""}`}>
+                          via {c.whatsappAccount.businessName || c.whatsappAccount.displayPhoneNumber || "number"}
+                        </div>
+                      )}
 
                       <div className="conv-bottom">
                         <span className="conv-preview ellipsis" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>

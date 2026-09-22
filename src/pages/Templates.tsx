@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, ApiError, uploadFile } from "../api/client";
+import { accountLabel, useAccounts } from "../accounts/AccountContext";
 import type { MessageTemplate } from "../api/types";
 import {
   countVars,
@@ -133,6 +134,7 @@ function StoredTemplatePreview({ t }: { t: MessageTemplate }) {
 }
 
 export function TemplatesPage() {
+  const { selectedId, selected } = useAccounts();
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -185,9 +187,14 @@ export function TemplatesPage() {
     setError(null);
     setNotice(null);
     try {
-      await api("/api/v1/whatsapp/templates/sync", { method: "POST" });
+      await api("/api/v1/whatsapp/templates/sync", {
+        method: "POST",
+        body: JSON.stringify({ ...(selectedId ? { whatsappAccountId: selectedId } : {}) }),
+      });
       await load();
-      setNotice("Templates synced successfully from Meta Business Manager.");
+      setNotice(
+        `Templates synced successfully from Meta Business Manager${selected ? ` (${accountLabel(selected)})` : ""}.`,
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Sync failed");
     } finally {
@@ -245,6 +252,7 @@ export function TemplatesPage() {
           name: name.trim().toLowerCase(),
           language: language.trim(),
           category,
+          ...(selectedId ? { whatsappAccountId: selectedId } : {}),
           headerFormat: isAuth ? "NONE" : headerFormat,
           headerText: isAuth || headerFormat !== "TEXT" ? undefined : headerText.trim() || undefined,
           headerHandle: isAuth || headerFormat === "NONE" || headerFormat === "TEXT" ? undefined : headerHandle || undefined,
