@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { accountLabel, useAccounts } from "../accounts/AccountContext";
-import { Building2, ChevronDown, Zap } from "lucide-react";
+import { Building2, ChevronDown, Menu, Zap } from "lucide-react";
 
 function AccountSwitcher() {
   const { accounts, selectedId, select, loading } = useAccounts();
@@ -22,7 +23,7 @@ function AccountSwitcher() {
           display: "inline-flex", alignItems: "center", gap: "0.4rem",
           fontSize: "0.75rem", color: "#0f172a", fontWeight: 700,
           background: "#f1f5f9", padding: "0.35rem 0.65rem", borderRadius: "9999px",
-          maxWidth: "16rem", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+          maxWidth: "14rem", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
         }}
       >
         <Building2 size={13} color="#00a884" />
@@ -43,7 +44,7 @@ function AccountSwitcher() {
       <select
         value={selected.id}
         onChange={(e) => select(e.target.value)}
-        style={{ border: "none", background: "transparent", fontSize: "0.75rem", fontWeight: 700, color: "#0f172a", cursor: "pointer", maxWidth: "14rem" }}
+        style={{ border: "none", background: "transparent", fontSize: "0.75rem", fontWeight: 700, color: "#0f172a", cursor: "pointer", maxWidth: "12rem" }}
       >
         {accounts.map((a) => (
           <option key={a.id} value={a.id}>{accountLabel(a)}</option>
@@ -56,6 +57,21 @@ function AccountSwitcher() {
 
 export function AppShell() {
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close mobile sidebar whenever route changes
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Close on Escape key
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setSidebarOpen(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const routeTitles: Record<string, string> = {
     "/dashboard": "Overview Dashboard",
@@ -70,22 +86,41 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="app-content">
         <header className="top-header">
-          <div className="top-breadcrumb">
-            <span>ImmerzoWAPI</span>
-            <span>/</span>
-            <span className="top-breadcrumb-current">{currentTitle}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", minWidth: 0 }}>
+            <button
+              type="button"
+              className="mobile-menu-btn"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar menu"
+              title="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="top-breadcrumb">
+              <span>ImmerzoWAPI</span>
+              <span>/</span>
+              <span className="top-breadcrumb-current">{currentTitle}</span>
+            </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
             <AccountSwitcher />
-            <div className="top-meta-badge">
+            <div className="top-meta-badge header-badge-desktop">
               <span className="pulse-dot" />
               <span>Meta Cloud API v20.0 • Connected</span>
             </div>
             <div
+              className="header-badge-desktop"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

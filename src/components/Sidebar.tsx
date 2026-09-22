@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  X,
 } from "lucide-react";
 
 const LINKS = [
@@ -21,11 +22,17 @@ const LINKS = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const { user, tenant, logout } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
+    onClose?.();
     logout();
     navigate("/login", { replace: true });
   }
@@ -33,7 +40,7 @@ export function Sidebar() {
   const initial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
 
   return (
-    <nav className="app-sidebar">
+    <nav className={`app-sidebar${mobileOpen ? " mobile-open" : ""}`} aria-label="Main Navigation">
       <div className="brand">
         <div className="brand-logo-container">
           <img
@@ -53,6 +60,18 @@ export function Sidebar() {
           </span>
           <span className="brand-tagline">Enterprise WhatsApp SaaS</span>
         </div>
+
+        {onClose && (
+          <button
+            type="button"
+            className="mobile-sidebar-close"
+            onClick={onClose}
+            aria-label="Close menu"
+            title="Close menu"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       <ul className="side-nav">
@@ -63,6 +82,7 @@ export function Sidebar() {
               <NavLink
                 to={l.to}
                 className={({ isActive }) => `side-link${isActive ? " active" : ""}`}
+                onClick={() => onClose?.()}
               >
                 <span className="side-icon">
                   <Icon size={18} />

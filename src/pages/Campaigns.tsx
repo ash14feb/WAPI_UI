@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Send,
   Zap,
+  Check,
 } from "lucide-react";
 
 export function CampaignsPage() {
@@ -480,72 +481,136 @@ export function CampaignsPage() {
               </label>
 
               {/* Audience Selector */}
-              <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a" }}>
-                    Select Recipients ({selected.size} of {contacts.length} chosen)
+              <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a" }}>
+                      Select Recipients
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        padding: "0.2rem 0.55rem",
+                        borderRadius: "9999px",
+                        background: selected.size > 0 ? "#e6f7f3" : "#f1f5f9",
+                        color: selected.size > 0 ? "#047857" : "#64748b",
+                      }}
+                    >
+                      {selected.size} of {contacts.length} chosen
+                    </span>
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <button type="button" className="ghost-btn" style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }} onClick={selectAll}>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem" }}
+                      onClick={selectAll}
+                    >
                       Select All
                     </button>
-                    <button type="button" className="ghost-btn" style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }} onClick={clearAll}>
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem" }}
+                      onClick={clearAll}
+                      disabled={selected.size === 0}
+                    >
                       Clear
                     </button>
                   </div>
                 </div>
 
-                <div className="search-box" style={{ margin: "0.25rem 0" }}>
-                  <div className="search-box-inner">
-                    <Search size={14} className="search-box-icon" />
-                    <input
-                      type="search"
-                      placeholder="Filter audience contacts…"
-                      value={contactSearch}
-                      onChange={(e) => setContactSearch(e.target.value)}
-                    />
-                  </div>
+                {/* Filter Audience Contacts Search Bar with Centered Icon */}
+                <div style={{ position: "relative", width: "100%", display: "flex", alignItems: "center" }}>
+                  <Search
+                    size={15}
+                    style={{
+                      position: "absolute",
+                      left: "0.85rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#94a3b8",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <input
+                    type="search"
+                    placeholder="Filter audience contacts by name or phone…"
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "0.55rem 0.875rem 0.55rem 2.4rem",
+                      fontSize: "0.8125rem",
+                      background: "#f8fafc",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      height: "38px",
+                    }}
+                  />
                 </div>
 
+                {/* Contact Selection Buttons */}
                 <div
                   style={{
-                    maxHeight: "180px",
+                    maxHeight: "190px",
                     overflowY: "auto",
                     border: "1px solid var(--border)",
-                    borderRadius: "8px",
+                    borderRadius: "10px",
                     background: "#ffffff",
-                    padding: "0.5rem",
+                    padding: "0.625rem",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "0.45rem",
+                    alignContent: "flex-start",
                   }}
                 >
-                  {contacts.map((c) => (
-                    <label
-                      key={c.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.6rem",
-                        padding: "0.4rem 0.5rem",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        margin: 0,
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selected.has(c.id)}
-                        onChange={() => toggleContact(c.id)}
-                      />
-                      <span style={{ fontWeight: 600, fontSize: "0.8125rem", color: "#0f172a" }}>
-                        {c.name || c.profileName || c.phone}
-                      </span>
-                      <span className="muted tiny" style={{ marginLeft: "auto", fontFamily: "var(--font-mono)" }}>
-                        {c.phone}
-                      </span>
-                    </label>
-                  ))}
+                  {contacts.map((c) => {
+                    const isChosen = selected.has(c.id);
+                    const displayName = c.name || c.profileName || c.phone;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => toggleContact(c.id)}
+                        title={`${displayName} (${c.phone}) — click to ${isChosen ? "deselect" : "select"}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.35rem",
+                          padding: "0.35rem 0.7rem",
+                          borderRadius: "8px",
+                          fontSize: "0.8125rem",
+                          fontWeight: isChosen ? 600 : 500,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                          background: isChosen ? "#e6f7f3" : "#f8fafc",
+                          border: isChosen ? "1.5px solid #00a884" : "1px solid #cbd5e1",
+                          color: isChosen ? "#047857" : "#334155",
+                          boxShadow: isChosen ? "0 1px 3px rgba(0, 168, 132, 0.18)" : "none",
+                        }}
+                      >
+                        {isChosen ? (
+                          <Check size={13} strokeWidth={2.5} color="#00a884" />
+                        ) : (
+                          <span
+                            style={{
+                              width: "6px",
+                              height: "6px",
+                              borderRadius: "50%",
+                              background: "#94a3b8",
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <span>{displayName}</span>
+                      </button>
+                    );
+                  })}
                   {contacts.length === 0 && (
-                    <div className="muted small" style={{ textAlign: "center", padding: "1rem" }}>
-                      No contacts found.
+                    <div className="muted small" style={{ width: "100%", textAlign: "center", padding: "1.25rem 0.5rem" }}>
+                      {contactSearch.trim() ? "No contacts match your filter." : "No contacts available."}
                     </div>
                   )}
                 </div>

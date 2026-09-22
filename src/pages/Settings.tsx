@@ -163,10 +163,10 @@ export function SettingsPage() {
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
         {/* Connected WhatsApp Account Card */}
         <section className="card" style={{ gridColumn: "1 / -1", marginBottom: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1.25rem" }}>
             <h2>
               <ShieldCheck size={20} color="#00a884" />
               <span>Connected WhatsApp Business Accounts</span>
