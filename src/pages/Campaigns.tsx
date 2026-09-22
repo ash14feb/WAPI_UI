@@ -350,8 +350,8 @@ export function CampaignsPage() {
 
       {/* New Broadcast Modal */}
       {showCreate && (
-        <div className="modal-overlay" onClick={() => setShowCreate(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay campaign-modal-overlay" onClick={() => setShowCreate(false)}>
+          <div className="modal campaign-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <Megaphone size={20} color="#00a884" />
@@ -367,7 +367,7 @@ export function CampaignsPage() {
               </button>
             </div>
 
-            <form onSubmit={onCreate} className="form-grid">
+            <form onSubmit={onCreate} className="form-grid campaign-form">
               <label className="span-2">
                 Broadcast Campaign Name
                 <input
@@ -553,6 +553,7 @@ export function CampaignsPage() {
 
                 {/* Contact Selection Buttons */}
                 <div
+                  className="campaign-recipients-box"
                   style={{
                     maxHeight: "190px",
                     overflowY: "auto",
@@ -575,6 +576,7 @@ export function CampaignsPage() {
                         type="button"
                         onClick={() => toggleContact(c.id)}
                         title={`${displayName} (${c.phone}) — click to ${isChosen ? "deselect" : "select"}`}
+                        className={`contact-chip-btn${isChosen ? " selected" : ""}`}
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -604,7 +606,9 @@ export function CampaignsPage() {
                             }}
                           />
                         )}
-                        <span>{displayName}</span>
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "200px" }}>
+                          {displayName}
+                        </span>
                       </button>
                     );
                   })}

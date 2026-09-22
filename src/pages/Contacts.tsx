@@ -13,6 +13,7 @@ import {
   Trash2,
   X,
   ShieldCheck,
+  AlertCircle,
 } from "lucide-react";
 
 interface Draft {
@@ -45,6 +46,7 @@ export function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [editing, setEditing] = useState<Contact | null>(null);
   const [busy, setBusy] = useState(false);
@@ -72,11 +74,25 @@ export function ContactsPage() {
   const phoneValid = /^\+?[1-9]\d{6,14}$/.test(draft.phone.trim());
   const emailValid = !draft.email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim());
 
+  // Check if phone number already exists in contacts
+  const phoneClean = draft.phone.trim().replace(/\D/g, "");
+  const isDuplicatePhone =
+    phoneClean.length >= 7 &&
+    contacts.some((c) => {
+      if (editing && c.id === editing.id) return false;
+      const cClean = c.phone.replace(/\D/g, "");
+      return cClean === phoneClean || c.phone.trim() === draft.phone.trim();
+    });
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (isDuplicatePhone) {
+      setFormError("This phone number is already present in your audience contacts.");
+      return;
+    }
     if (!phoneValid || !emailValid || busy) return;
     setBusy(true);
-    setError(null);
+    setFormError(null);
     setNotice(null);
     try {
       const body = JSON.stringify({
@@ -93,10 +109,13 @@ export function ContactsPage() {
       }
       setDraft(EMPTY);
       setEditing(null);
+      setFormError(null);
       setShowForm(false);
       await load(search);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Save failed");
+      // Show validation error inside the modal screen only, not on the previous screen!
+      const msg = err instanceof ApiError ? err.message : "Failed to save contact";
+      setFormError(msg);
     } finally {
       setBusy(false);
     }
@@ -106,6 +125,7 @@ export function ContactsPage() {
     setEditing(c);
     setDraft({ phone: c.phone, name: c.name ?? "", email: c.email ?? "" });
     setShowForm(true);
+    setFormError(null);
     setError(null);
     setNotice(null);
   }
@@ -113,6 +133,7 @@ export function ContactsPage() {
   function cancelEdit() {
     setEditing(null);
     setDraft(EMPTY);
+    setFormError(null);
     setShowForm(false);
   }
 
@@ -169,6 +190,7 @@ export function ContactsPage() {
             onClick={() => {
               cancelEdit();
               setShowForm(true);
+              setFormError(null);
               setError(null);
             }}
           >
@@ -326,17 +348,47 @@ export function ContactsPage() {
               </button>
             </div>
 
+            {formError && (
+              <div
+                className="error"
+                style={{
+                  marginBottom: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  fontSize: "0.84rem",
+                  padding: "0.65rem 0.85rem",
+                  borderRadius: "8px",
+                  background: "#fee2e2",
+                  border: "1px solid #fca5a5",
+                  color: "#991b1b",
+                }}
+              >
+                <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                <span>{formError}</span>
+              </div>
+            )}
+
             <form onSubmit={onSubmit} className="form-grid form-single" noValidate>
               <label>
                 Phone Number (E.164 digits, e.g. 15553829920 or 919986439557)
                 <input
                   value={draft.phone}
-                  onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
+                  onChange={(e) => {
+                    setDraft({ ...draft, phone: e.target.value });
+                    setFormError(null);
+                  }}
                   required
                   disabled={busy}
                   placeholder="e.g. 15553829920"
+                  style={isDuplicatePhone ? { borderColor: "#ef4444" } : undefined}
                 />
-                {draft.phone && !phoneValid && (
+                {isDuplicatePhone && (
+                  <span className="field-error" style={{ color: "#dc2626", fontWeight: 600 }}>
+                    This phone number is already present in your audience contacts.
+                  </span>
+                )}
+                {draft.phone && !phoneValid && !isDuplicatePhone && (
                   <span className="field-error">Digits only with country code, E.164 formatted.</span>
                 )}
               </label>
@@ -345,7 +397,10 @@ export function ContactsPage() {
                 Full Name (Optional)
                 <input
                   value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  onChange={(e) => {
+                    setDraft({ ...draft, name: e.target.value });
+                    setFormError(null);
+                  }}
                   placeholder="e.g. Maya Lin"
                   maxLength={120}
                   disabled={busy}
@@ -357,7 +412,10 @@ export function ContactsPage() {
                 <input
                   type="email"
                   value={draft.email}
-                  onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+                  onChange={(e) => {
+                    setDraft({ ...draft, email: e.target.value });
+                    setFormError(null);
+                  }}
                   placeholder="maya@example.com"
                   disabled={busy}
                 />
@@ -373,7 +431,7 @@ export function ContactsPage() {
                 <button
                   type="submit"
                   className="primary-btn"
-                  disabled={busy || !phoneValid || !emailValid}
+                  disabled={busy || !phoneValid || !emailValid || isDuplicatePhone}
                 >
                   {busy ? (
                     <>

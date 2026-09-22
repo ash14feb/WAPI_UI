@@ -1351,6 +1351,11 @@ h1, h2, h3, h4, h5, h6 {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+@keyframes campaignModalSlideUp {
+  from { transform: translateY(100%); opacity: 0.85; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .modal-head {
   display: flex;
   justify-content: space-between;
@@ -1824,5 +1829,101 @@ h1, h2, h3, h4, h5, h6 {
   }
   .form-grid .span-2 {
     grid-column: span 1;
+  }
+
+  /* Create Campaign Popup - Mobile View Optimization (Only active for mobile screens) */
+  .campaign-modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    background: rgba(11, 20, 26, 0.75) !important;
+  }
+
+  .campaign-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 94vh !important;
+    max-height: 94vh !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35) !important;
+    animation: campaignModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .campaign-modal .modal-head {
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 20;
+    padding: 1rem 1rem 0.75rem !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .campaign-modal .modal-head h2 {
+    font-size: 1.125rem !important;
+  }
+
+  .campaign-modal form.campaign-form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.875rem !important;
+    padding: 1rem !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex: 1 1 auto !important;
+  }
+
+  .campaign-modal form.campaign-form label {
+    font-size: 0.8125rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .campaign-modal form.campaign-form input,
+  .campaign-modal form.campaign-form select {
+    font-size: 0.9375rem !important;
+    padding: 0.65rem 0.875rem !important;
+    min-height: 42px !important;
+    width: 100% !important;
+  }
+
+  .campaign-modal .campaign-recipients-box {
+    max-height: 150px !important;
+  }
+
+  .campaign-modal .contact-chip-btn {
+    min-height: 34px !important;
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.8125rem !important;
+  }
+
+  .campaign-modal .modal-actions {
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    z-index: 20;
+    padding: 0.75rem 1rem 1rem !important;
+    margin: 0 !important;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+    display: flex !important;
+    gap: 0.625rem !important;
+  }
+
+  .campaign-modal .modal-actions button {
+    flex: 1 !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+    padding: 0.65rem 1rem !important;
+    font-size: 0.875rem !important;
   }
 }
