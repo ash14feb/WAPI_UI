@@ -7,6 +7,7 @@ import {
   FileText,
   SendHorizontal,
   Users,
+  Bot,
   Settings,
   LogOut,
   ShieldCheck,
@@ -19,6 +20,7 @@ const LINKS = [
   { to: "/templates", label: "Templates", icon: FileText },
   { to: "/campaigns", label: "Campaigns", icon: SendHorizontal },
   { to: "/contacts", label: "Contacts", icon: Users },
+  { to: "/bots", label: "Chatbot", icon: Bot },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

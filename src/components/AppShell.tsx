@@ -79,6 +79,7 @@ export function AppShell() {
     "/templates": "Message Template Studio",
     "/campaigns": "Broadcast Campaigns",
     "/contacts": "Audience Directory",
+    "/bots": "Chatbot Auto-Replies",
     "/settings": "Integration & Settings",
   };
 
