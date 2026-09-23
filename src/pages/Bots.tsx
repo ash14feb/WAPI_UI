@@ -179,43 +179,43 @@ export function BotsPage() {
       )}
 
       {showForm && (
-        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "34rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h2 style={{ margin: 0 }}>{editing ? "Edit rule" : "New bot rule"}</h2>
+        <div className="modal-overlay" onClick={() => setShowForm(false)}>
+          <div className="modal modal-narrow" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h2>{editing ? "Edit rule" : "New bot rule"}</h2>
               <button className="ghost-btn" onClick={() => setShowForm(false)}><X size={16} /></button>
             </div>
-            <form onSubmit={(e) => void onSubmit(e)} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              <label className="small">Name<input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required maxLength={200} /></label>
-              <label className="small">Number
+            <form className="form-grid" onSubmit={(e) => void onSubmit(e)}>
+              <label className="span-2">Name<input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required maxLength={200} /></label>
+              <label className="span-2">Number
                 <select value={draft.whatsappAccountId} onChange={(e) => setDraft({ ...draft, whatsappAccountId: e.target.value })}>
                   <option value="">All numbers</option>
                   {accounts.map((a) => <option key={a.id} value={a.id}>{accountLabel(a)}</option>)}
                 </select>
               </label>
-              <div style={{ display: "flex", gap: "0.75rem" }}>
-                <label className="small" style={{ flex: 1 }}>Match
-                  <select value={draft.matchType} onChange={(e) => setDraft({ ...draft, matchType: e.target.value })}>
-                    <option value="CONTAINS">contains</option>
-                    <option value="EXACT">exact</option>
-                    <option value="STARTS_WITH">starts with</option>
-                    <option value="DEFAULT">fallback (all unmatched)</option>
-                  </select>
-                </label>
-                {draft.matchType !== "DEFAULT" && (
-                  <label className="small" style={{ flex: 2 }}>Keyword<input value={draft.trigger} onChange={(e) => setDraft({ ...draft, trigger: e.target.value })} required placeholder="e.g. pricing" maxLength={500} /></label>
-                )}
-              </div>
-              <label className="small">Auto-reply<textarea value={draft.replyText} onChange={(e) => setDraft({ ...draft, replyText: e.target.value })} required rows={3} maxLength={4096} placeholder="Thanks for reaching out! …" /></label>
-              <label className="small" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <label>Match
+                <select value={draft.matchType} onChange={(e) => setDraft({ ...draft, matchType: e.target.value })}>
+                  <option value="CONTAINS">contains</option>
+                  <option value="EXACT">exact</option>
+                  <option value="STARTS_WITH">starts with</option>
+                  <option value="DEFAULT">fallback (all unmatched)</option>
+                </select>
+              </label>
+              {draft.matchType !== "DEFAULT" && (
+                <label>Keyword<input value={draft.trigger} onChange={(e) => setDraft({ ...draft, trigger: e.target.value })} required placeholder="e.g. pricing" maxLength={500} /></label>
+              )}
+              <label className="span-2">Auto-reply<textarea value={draft.replyText} onChange={(e) => setDraft({ ...draft, replyText: e.target.value })} required rows={3} maxLength={4096} placeholder="Thanks for reaching out! …" /></label>
+              <label className="span-2" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <input type="checkbox" checked={draft.handoff} onChange={(e) => setDraft({ ...draft, handoff: e.target.checked })} />
                 Hand off to human too (marks chat PENDING_HUMAN)
               </label>
-              <label className="small" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <label className="span-2" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <input type="checkbox" checked={draft.active} onChange={(e) => setDraft({ ...draft, active: e.target.checked })} />
                 Active
               </label>
-              <button className="primary-btn" disabled={busy}>{busy ? <ButtonSpinner /> : editing ? "Save rule" : "Create rule"}</button>
+              <div className="span-2 modal-actions">
+                <button className="primary-btn" disabled={busy}>{busy ? <ButtonSpinner /> : editing ? "Save rule" : "Create rule"}</button>
+              </div>
             </form>
           </div>
         </div>
