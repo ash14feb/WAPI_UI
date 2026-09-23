@@ -21,7 +21,7 @@ function maskId(val: string | null): string {
 declare global {
   interface Window {
     FB?: {
-      init: (opts: { appId: string; version: string; xfbml?: boolean }) => void;
+      init: (opts: { appId: string; autoLogAppEvents?: boolean; xfbml?: boolean; version: string }) => void;
       login: (
         cb: (resp: { authResponse?: { code?: string } }) => void,
         opts: {
@@ -83,7 +83,12 @@ export function SettingsPage() {
         throw new Error("Embedded Signup is not configured (META_APP_ID / META_CONFIG_ID missing on server)");
       }
       await loadFacebookSdk();
-      window.FB!.init({ appId: cfg.appId, version: cfg.graphVersion || "v21.0", xfbml: false });
+      window.FB!.init({
+        appId: cfg.appId,
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: cfg.graphVersion || "v26.0",
+      });
       const code = await new Promise<string>((resolve, reject) => {
         window.FB!.login(
           (resp) => {
