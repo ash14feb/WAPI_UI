@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-
-const API = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000";
-
-function authHeaders(): HeadersInit {
-  const token = localStorage.getItem("accessToken") ?? sessionStorage.getItem("accessToken") ?? "";
-  return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
-}
+import { api } from "../api/client";
 
 export function IntegrationsPage() {
   const [status, setStatus] = useState<{ connected: boolean; shop: string | null; configured: boolean } | null>(null);
@@ -15,10 +9,9 @@ export function IntegrationsPage() {
 
   async function load() {
     try {
-      const r = await fetch(`${API}/api/v1/integrations/shopify/status`, { headers: authHeaders() });
-      const j = await r.json();
-      setStatus(j.data ?? null);
-    } catch { setMsg("Could not reach API"); }
+      const data = await api<{ connected: boolean; shop: string | null; configured: boolean }>("/api/v1/integrations/shopify/status");
+      setStatus(data ?? null);
+    } catch { setMsg("Could not reach API — please log in again"); }
   }
   useEffect(() => { void load(); }, []);
 
@@ -26,18 +19,19 @@ export function IntegrationsPage() {
     e.preventDefault();
     setBusy(true); setMsg("");
     try {
-      const r = await fetch(`${API}/api/v1/integrations/shopify/connect`, {
-        method: "POST", headers: authHeaders(), body: JSON.stringify({ shop }),
+      const data = await api<{ installUrl: string }>("/api/v1/integrations/shopify/connect", {
+        method: "POST", body: JSON.stringify({ shop }),
       });
-      const j = await r.json();
-      if (!r.ok) { setMsg(j.error?.message ?? "Connect failed"); return; }
-      window.location.href = j.data.installUrl as string;
-    } finally { setBusy(false); }
+      window.location.href = data.installUrl;
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Connect failed");
+      setBusy(false);
+    }
   }
 
   async function disconnect() {
     setBusy(true);
-    await fetch(`${API}/api/v1/integrations/shopify/disconnect`, { method: "DELETE", headers: authHeaders() });
+    try { await api("/api/v1/integrations/shopify/disconnect", { method: "DELETE" }); } catch { /* ignore */ }
     setBusy(false); void load();
   }
 
