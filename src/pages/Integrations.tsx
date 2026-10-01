@@ -10,11 +10,18 @@ export function IntegrationsPage() {
   const [shop, setShop] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [events, setEvents] = useState<{ eventType: string; externalEventId: string; processingStatus: string; errorMessage: string | null; receivedAt: string }[]>([]);
 
   async function load() {
     try {
       const data = await api<{ connected: boolean; shop: string | null; configured: boolean }>("/api/v1/integrations/shopify/status");
       setStatus(data ?? null);
+      if (data?.connected) {
+        try {
+          const ev = await api<{ events: typeof events }>("/api/v1/integrations/shopify/events");
+          setEvents(ev.events ?? []);
+        } catch { /* events optional */ }
+      }
     } catch { setMsg("Could not reach API — please log in again"); }
   }
   useEffect(() => { void load(); }, []);
@@ -79,6 +86,31 @@ export function IntegrationsPage() {
           <li>orders/fulfilled → shipment_update template</li>
           <li>checkouts/create|update → abandoned_checkout template</li>
         </ul>
+        {status?.connected && (
+          <div style={{ marginTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ margin: 0 }}>Recent Shopify events</h3>
+              <button onClick={() => void load()} disabled={busy}>Refresh</button>
+            </div>
+            {events.length === 0 ? (
+              <p style={{ color: "#6b7280", fontSize: 14 }}>No webhooks received yet — hit Send test in Shopify, then Refresh.</p>
+            ) : (
+              <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse", marginTop: 8 }}>
+                <thead><tr style={{ textAlign: "left", color: "#6b7280" }}><th>Time</th><th>Topic</th><th>Status</th><th>Detail</th></tr></thead>
+                <tbody>
+                  {events.map((e) => (
+                    <tr key={e.externalEventId} style={{ borderTop: "1px solid #eee" }}>
+                      <td>{new Date(e.receivedAt).toLocaleString()}</td>
+                      <td>{e.eventType.replace("shopify:", "")}</td>
+                      <td>{e.processingStatus}</td>
+                      <td style={{ color: "#6b7280" }}>{e.errorMessage ?? e.externalEventId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
