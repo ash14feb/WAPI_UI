@@ -10,6 +10,7 @@ import { CampaignsPage } from "./pages/Campaigns";
 import { CampaignDetailPage } from "./pages/CampaignDetail";
 import { ContactsPage } from "./pages/Contacts";
 import { BotsPage } from "./pages/Bots";
+import { IntegrationsPage } from "./pages/Integrations";
 import { InboxPage } from "./inbox/InboxPage";
 import { ConversationView } from "./inbox/ConversationView";
 
@@ -36,6 +37,7 @@ export function App() {
         <Route path="/campaigns/:campaignId" element={<CampaignDetailPage />} />
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/bots" element={<BotsPage />} />
+        <Route path="/integrations" element={<IntegrationsPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

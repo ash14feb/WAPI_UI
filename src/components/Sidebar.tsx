@@ -4,6 +4,7 @@ import logoUrl from "../../iwapilogo.png";
 import {
   LayoutDashboard,
   MessageSquare,
+  Plug,
   FileText,
   SendHorizontal,
   Users,
@@ -21,6 +22,7 @@ const LINKS = [
   { to: "/campaigns", label: "Campaigns", icon: SendHorizontal },
   { to: "/contacts", label: "Contacts", icon: Users },
   { to: "/bots", label: "Chatbot", icon: Bot },
+  { to: "/integrations", label: "Integrations", icon: Plug },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
