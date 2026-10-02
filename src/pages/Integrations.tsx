@@ -112,6 +112,55 @@ export function IntegrationsPage() {
           </div>
         )}
       </section>
+      <section style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, marginTop: 16 }}>
+        <h2 style={{ margin: 0 }}>Instagram</h2>
+        <p style={{ color: "#6b7280" }}>Receive DMs as webhook events, reply from the API. Meta → App → Webhooks → Instagram → Subscribe to <code>messages</code>.</p>
+        <InstagramCard />
+      </section>
+    </div>
+  );
+}
+
+function InstagramCard() {
+  const [events, setEvents] = useState<{ senderId: string; text: string; receivedAt: string }[]>([]);
+  const [to, setTo] = useState("");
+  const [text, setText] = useState("");
+  const [msg, setMsg] = useState("");
+  async function load() {
+    try {
+      const d = await api<{ events: typeof events }>("/api/v1/integrations/instagram/events");
+      setEvents(d.events ?? []);
+    } catch { setMsg("Load failed — log in again"); }
+  }
+  useEffect(() => { void load(); }, []);
+  async function send(e: React.FormEvent) {
+    e.preventDefault(); setMsg("");
+    try {
+      await api("/api/v1/integrations/instagram/send", { method: "POST", body: JSON.stringify({ to, text }) });
+      setMsg("Sent"); setText("");
+    } catch (err) { setMsg(err instanceof Error ? err.message : "Send failed"); }
+  }
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <h3 style={{ margin: 0 }}>Recent DMs</h3>
+        <button onClick={() => void load()}>Refresh</button>
+      </div>
+      {events.length === 0 ? (
+        <p style={{ color: "#6b7280", fontSize: 14 }}>No DMs yet — DM your Business account, then Refresh.</p>
+      ) : (
+        <ul style={{ fontSize: 13 }}>
+          {events.map((e, i) => (
+            <li key={i}><strong>{e.senderId}</strong>: {e.text} <span style={{ color: "#9ca3af" }}>({new Date(e.receivedAt).toLocaleString()})</span></li>
+          ))}
+        </ul>
+      )}
+      <form onSubmit={send} style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="IG user ID" style={{ width: 160, padding: 8 }} />
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Reply text" style={{ flex: 1, padding: 8 }} />
+        <button type="submit" disabled={!to || !text}>Send</button>
+      </form>
+      {msg && <p>{msg}</p>}
     </div>
   );
 }
