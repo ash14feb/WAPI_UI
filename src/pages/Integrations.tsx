@@ -114,7 +114,7 @@ export function IntegrationsPage() {
       </section>
       <section style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, marginTop: 16 }}>
         <h2 style={{ margin: 0 }}>Instagram</h2>
-        <p style={{ color: "#6b7280" }}>Receive DMs as webhook events, reply from the API. Meta → App → Webhooks → Instagram → Subscribe to <code>messages</code>.</p>
+        <p style={{ color: "#6b7280" }}>Receive DMs as webhook events, reply from the API. Meta → App → Webhooks → Instagram → Subscribe to <code>messages</code>.</p> 
         <InstagramCard />
       </section>
     </div>
