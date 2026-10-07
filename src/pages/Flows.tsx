@@ -6,7 +6,6 @@ interface FlowScreen { id: string; title: string; fields: FlowField[]; }
 interface Flow { id: string; name: string; status: string; metaFlowId: string | null; categories: string | null; flowJson: string; version: number; updatedAt: string; }
 interface FlowResponse { id: string; phone: string; responseJson: string; receivedAt: string; }
 
-const KINDS = ["text", "textarea", "number", "email", "dropdown", "checkbox", "radio", "date"];
 const card: React.CSSProperties = { border: "1px solid #e5e7eb", borderRadius: 14, padding: 20, marginTop: 16, background: "#fff" };
 const btn: React.CSSProperties = { padding: "8px 14px", borderRadius: 8, border: "1px solid #d1d5db", background: "#111827", color: "#fff", cursor: "pointer" };
 const btnGhost: React.CSSProperties = { ...btn, background: "#fff", color: "#111827" };
@@ -17,13 +16,91 @@ const pill = (s: string): React.CSSProperties => {
 };
 
 function emptyScreen(n: number): FlowScreen { return { id: `SCREEN_${n}`, title: `Step ${n}`, fields: [] }; }
-function emptyField(): FlowField { return { kind: "text", label: "", name: "", required: false, options: [] }; }
+function emptyField(kind = "text"): FlowField {
+  const labelMap: Record<string, string> = { text: "Your answer", textarea: "Details", number: "Quantity", email: "Email address", dropdown: "Choose an option", checkbox: "Select all that apply", radio: "Pick one", date: "Preferred date" };
+  const nameMap: Record<string, string> = { text: "answer", textarea: "details", number: "quantity", email: "email", dropdown: "choice", checkbox: "choices", radio: "choice", date: "date" };
+  const needsOptions = kind === "dropdown" || kind === "checkbox" || kind === "radio";
+  return { kind, label: labelMap[kind] ?? "Question", name: `${nameMap[kind] ?? "field"}_${Math.floor(Math.random() * 900 + 100)}`, required: false, options: needsOptions ? ["Option 1", "Option 2"] : [] };
+}
+
+const PALETTE: { kind: string; icon: string; label: string; hint: string }[] = [
+  { kind: "text", icon: "⌨", label: "Text input", hint: "Short answer" },
+  { kind: "textarea", icon: "📝", label: "Long text", hint: "Paragraph" },
+  { kind: "number", icon: "🔢", label: "Number", hint: "Numeric" },
+  { kind: "email", icon: "✉", label: "Email", hint: "Email address" },
+  { kind: "dropdown", icon: "▾", label: "Dropdown", hint: "Pick one" },
+  { kind: "checkbox", icon: "☑", label: "Checkboxes", hint: "Pick many" },
+  { kind: "radio", icon: "🔘", label: "Radio", hint: "Pick one" },
+  { kind: "date", icon: "📅", label: "Date", hint: "Date picker" },
+];
+
+function paletteLabel(kind: string): string {
+  return PALETTE.find((p) => p.kind === kind)?.label ?? kind;
+}
+
+function PhonePreview({ screen, flowName }: { screen: FlowScreen | undefined; flowName: string }) {
+  if (!screen) return <div style={{ color: "#9ca3af", fontSize: 13 }}>Select a screen to preview</div>;
+  return (
+    <div style={{ width: 250, borderRadius: 28, border: "8px solid #111827", background: "#e7ffdb", padding: "14px 10px", boxShadow: "0 8px 24px rgba(0,0,0,.15)" }}>
+      <div style={{ fontSize: 11, color: "#667781", textAlign: "center", marginBottom: 6 }}>WHATSAPP · {flowName || "flow"}</div>
+      <div style={{ background: "#fff", borderRadius: 10, padding: 10, boxShadow: "0 1px 1px rgba(0,0,0,.1)" }}>
+        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{screen.title || "Untitled step"}</div>
+        {screen.fields.length === 0 && <div style={{ fontSize: 12, color: "#9ca3af" }}>Drop fields here…</div>}
+        {screen.fields.map((f, i) => (
+          <div key={i} style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600 }}>{f.label || "Untitled"}{f.required ? " *" : ""}</div>
+            {(f.kind === "dropdown" || f.kind === "checkbox" || f.kind === "radio") ? (
+              <div style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "#6b7280" }}>
+                {(f.options ?? []).slice(0, 3).join(" · ") || "options…"}
+              </div>
+            ) : f.kind === "date" ? (
+              <div style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "#6b7280" }}>📅 dd/mm/yyyy</div>
+            ) : (
+              <div style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "#9ca3af" }}>{f.placeholder || "Type answer…"}</div>
+            )}
+          </div>
+        ))}
+        <div style={{ background: "#00a884", color: "#fff", textAlign: "center", borderRadius: 8, padding: 7, fontSize: 13, fontWeight: 700, marginTop: 4 }}>Continue →</div>
+      </div>
+    </div>
+  );
+}
 
 function prettyAnswers(json: string): string {
   try {
     const o = JSON.parse(json) as Record<string, unknown>;
     return Object.entries(o).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : String(v)}`).join("  |  ");
   } catch { return json.slice(0, 200); }
+}
+
+const ID_RE = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
+
+/** UI-level validation mirroring Meta + backend rules — blocks save with messages. */
+export function validateBuilder(name: string, screens: FlowScreen[]): string[] {
+  const errors: string[] = [];
+  if (!name.trim()) errors.push("Flow name is required");
+  else if (!/^[A-Za-z0-9_ ]{1,100}$/.test(name)) errors.push("Flow name: letters, numbers, spaces, underscores only (max 100)");
+  if (screens.length === 0 || screens.length > 10) errors.push("Flow needs 1–10 screens");
+  const screenIds = new Set<string>();
+  screens.forEach((s, i) => {
+    const label = `Screen ${i + 1}`;
+    if (!ID_RE.test(s.id)) errors.push(`${label}: id "${s.id}" must start with a letter, letters/numbers/underscore only`);
+    else if (screenIds.has(s.id)) errors.push(`${label}: duplicate screen id "${s.id}"`);
+    else screenIds.add(s.id);
+    if (!s.title.trim()) errors.push(`${label} (${s.id}): title is required`);
+    if (s.fields.length > 20) errors.push(`${label} (${s.id}): max 20 fields`);
+    const names = new Set<string>();
+    s.fields.forEach((f, j) => {
+      const fl = `${label} → field ${j + 1}`;
+      if (!ID_RE.test(f.name)) errors.push(`${fl}: name "${f.name}" must start with a letter, letters/numbers/underscore only`);
+      else if (names.has(f.name)) errors.push(`${fl}: duplicate field name "${f.name}"`);
+      else names.add(f.name);
+      if (!f.label.trim()) errors.push(`${fl} (${f.name || "?"}): label is required`);
+      if ((f.kind === "dropdown" || f.kind === "checkbox" || f.kind === "radio") && (!f.options || f.options.length === 0))
+        errors.push(`${fl} (${f.name || "?"}): add at least one option`);
+    });
+  });
+  return errors;
 }
 
 export function FlowsPage() {
@@ -37,6 +114,7 @@ export function FlowsPage() {
   const [sendFor, setSendFor] = useState<Flow | null>(null);
   const [respFor, setRespFor] = useState<Flow | null>(null);
   const [responses, setResponses] = useState<FlowResponse[]>([]);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
 
   async function load() {
     try {
@@ -61,7 +139,9 @@ export function FlowsPage() {
   }
 
   async function save() {
-    if (!name.trim()) { setMsg("Name required"); return; }
+    const errs = validateBuilder(name, screens);
+    setFormErrors(errs);
+    if (errs.length > 0) { setMsg(`Fix ${errs.length} validation issue(s) below before saving`); return; }
     setBusy(true); setMsg("");
     try {
       if (editing) {
@@ -149,43 +229,148 @@ export function FlowsPage() {
         </div>
       )}
 
-      {showBuilder && (
-        <div style={{ ...card, borderColor: "#111827" }}>
-          <h3 style={{ marginTop: 0 }}>{editing ? `Edit draft: ${editing.name}` : "New flow"}</h3>
-          <label>Name<br /><input value={name} onChange={(e) => setName(e.target.value)} placeholder="cod_confirm_form" style={{ ...input, width: 320 }} /></label>
-          {screens.map((s, si) => (
-            <div key={si} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, marginTop: 10 }}>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input value={s.id} onChange={(e) => { const c = [...screens]; c[si] = { ...s, id: e.target.value }; setScreens(c); }} placeholder="SCREEN_ID" style={{ ...input, width: 160, fontFamily: "monospace" }} />
-                <input value={s.title} onChange={(e) => { const c = [...screens]; c[si] = { ...s, title: e.target.value }; setScreens(c); }} placeholder="Step title" style={{ ...input, flex: 1 }} />
-                <button style={btnGhost} onClick={() => setScreens(screens.filter((_, i) => i !== si))} disabled={screens.length <= 1}>✕</button>
-              </div>
-              {s.fields.map((f, fi) => (
-                <div key={fi} style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-                  <select value={f.kind} onChange={(e) => { const c = [...screens]; const fl = [...s.fields]; fl[fi] = { ...f, kind: e.target.value }; c[si] = { ...s, fields: fl }; setScreens(c); }} style={input}>
-                    {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-                  </select>
-                  <input value={f.label} onChange={(e) => { const c = [...screens]; const fl = [...s.fields]; fl[fi] = { ...f, label: e.target.value }; c[si] = { ...s, fields: fl }; setScreens(c); }} placeholder="Label" style={{ ...input, width: 160 }} />
-                  <input value={f.name} onChange={(e) => { const c = [...screens]; const fl = [...s.fields]; fl[fi] = { ...f, name: e.target.value }; c[si] = { ...s, fields: fl }; setScreens(c); }} placeholder="field_name" style={{ ...input, width: 140, fontFamily: "monospace" }} />
-                  <label style={{ fontSize: 13 }}><input type="checkbox" checked={!!f.required} onChange={(e) => { const c = [...screens]; const fl = [...s.fields]; fl[fi] = { ...f, required: e.target.checked }; c[si] = { ...s, fields: fl }; setScreens(c); }} /> req</label>
-                  {(f.kind === "dropdown" || f.kind === "checkbox" || f.kind === "radio") && (
-                    <input value={(f.options ?? []).join(", ")} onChange={(e) => { const c = [...screens]; const fl = [...s.fields]; fl[fi] = { ...f, options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) }; c[si] = { ...s, fields: fl }; setScreens(c); }} placeholder="Option1, Option2" style={{ ...input, flex: 1 }} />
-                  )}
-                  <button style={btnGhost} onClick={() => { const c = [...screens]; c[si] = { ...s, fields: s.fields.filter((_, i) => i !== fi) }; setScreens(c); }}>✕</button>
-                </div>
-              ))}
-              <button style={{ ...btnGhost, marginTop: 8 }} onClick={() => { const c = [...screens]; c[si] = { ...s, fields: [...s.fields, emptyField()] }; setScreens(c); }}>+ Field</button>
-            </div>
-          ))}
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-            <button style={btnGhost} onClick={() => setScreens([...screens, emptyScreen(screens.length + 1)])} disabled={screens.length >= 10}>+ Screen</button>
-            <button style={btn} onClick={() => void save()} disabled={busy}>Save draft</button>
-            <button style={btnGhost} onClick={() => setShowBuilder(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
+      {showBuilder && <FlowBuilder name={name} setName={setName} screens={screens} setScreens={setScreens} editingName={editing?.name} busy={busy} formErrors={formErrors} onSave={() => void save()} onCancel={() => { setShowBuilder(false); setFormErrors([]); }} />}
 
       {sendFor && <SendFlowModal flow={sendFor} onClose={() => setSendFor(null)} />}
+    </div>
+  );
+}
+
+function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, formErrors, onSave, onCancel }: {
+  name: string; setName: (v: string) => void; screens: FlowScreen[]; setScreens: (v: FlowScreen[]) => void;
+  editingName?: string; busy: boolean; formErrors: string[]; onSave: () => void; onCancel: () => void;
+}) {
+  const [activeScreen, setActiveScreen] = useState(0);
+  const [dragKind, setDragKind] = useState<string | null>(null);
+  const [dragField, setDragField] = useState<{ si: number; fi: number } | null>(null);
+  const [overScreen, setOverScreen] = useState<number | null>(null);
+
+  const si = Math.min(activeScreen, screens.length - 1);
+  const screen = screens[si];
+
+  function patchField(fi: number, patch: Partial<FlowField>) {
+    const c = [...screens];
+    const fl = [...c[si].fields];
+    fl[fi] = { ...fl[fi], ...patch };
+    c[si] = { ...c[si], fields: fl };
+    setScreens(c);
+  }
+
+  function dropFieldOnto(targetSi: number, targetFi?: number) {
+    const c = screens.map((s) => ({ ...s, fields: [...s.fields] }));
+    if (dragKind) {
+      const f = emptyField(dragKind);
+      c[targetSi].fields.splice(targetFi ?? c[targetSi].fields.length, 0, f);
+      setScreens(c);
+    } else if (dragField) {
+      const { si: fromSi, fi: fromFi } = dragField;
+      const [moved] = c[fromSi].fields.splice(fromFi, 1);
+      let idx = targetFi ?? c[targetSi].fields.length;
+      if (fromSi === targetSi && fromFi < idx) idx -= 1;
+      c[targetSi].fields.splice(idx, 0, moved);
+      setScreens(c);
+    }
+    setDragKind(null); setDragField(null); setOverScreen(null);
+  }
+
+  function moveScreen(from: number, to: number) {
+    if (to < 0 || to >= screens.length) return;
+    const c = [...screens];
+    const [m] = c.splice(from, 1);
+    c.splice(to, 0, m);
+    setScreens(c);
+    setActiveScreen(to);
+  }
+
+  return (
+    <div style={{ ...card, borderColor: "#111827" }}>
+      <h3 style={{ marginTop: 0 }}>{editingName ? `Edit draft: ${editingName}` : "New flow"} — drag & drop builder</h3>
+      {formErrors.length > 0 && (
+        <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
+          <strong style={{ color: "#991b1b" }}>Fix before saving:</strong>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18, color: "#991b1b", fontSize: 13 }}>
+            {formErrors.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        </div>
+      )}
+      <label style={{ fontSize: 13 }}>Flow name<br /><input value={name} onChange={(e) => setName(e.target.value)} placeholder="cod_confirm_form" style={{ ...input, width: 320, fontFamily: "monospace" }} /></label>
+      <div style={{ display: "grid", gridTemplateColumns: "170px 1fr 270px", gap: 12, marginTop: 12 }}>
+        {/* Palette */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 6 }}>ELEMENTS — drag onto canvas</div>
+          {PALETTE.map((p) => (
+            <div key={p.kind} draggable onDragStart={(e) => { setDragKind(p.kind); e.dataTransfer.effectAllowed = "copy"; }}
+              style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", marginBottom: 6, cursor: "grab", background: dragKind === p.kind ? "#eef2ff" : "#f9fafb" }}>
+              <div style={{ fontSize: 14 }}>{p.icon} <strong>{p.label}</strong></div>
+              <div style={{ fontSize: 11, color: "#9ca3af" }}>{p.hint}</div>
+            </div>
+          ))}
+        </div>
+        {/* Canvas */}
+        <div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+            {screens.map((s, i) => (
+              <div key={i} onClick={() => setActiveScreen(i)}
+                style={{ display: "flex", alignItems: "center", gap: 4, border: i === si ? "2px solid #111827" : "1px solid #e5e7eb", borderRadius: 999, padding: "4px 6px 4px 10px", fontSize: 12, cursor: "pointer", background: i === si ? "#fff" : "#f9fafb" }}>
+                <span>📄 {s.title || `Step ${i + 1}`}</span>
+                <button title="Move left" onClick={(e) => { e.stopPropagation(); moveScreen(i, i - 1); }} style={{ border: "none", background: "none", cursor: "pointer" }}>‹</button>
+                <button title="Move right" onClick={(e) => { e.stopPropagation(); moveScreen(i, i + 1); }} style={{ border: "none", background: "none", cursor: "pointer" }}>›</button>
+                {screens.length > 1 && <button title="Delete screen" onClick={(e) => { e.stopPropagation(); setScreens(screens.filter((_, x) => x !== i)); setActiveScreen(0); }} style={{ border: "none", background: "none", cursor: "pointer", color: "#991b1b" }}>✕</button>}
+              </div>
+            ))}
+            <button style={btnGhost} onClick={() => { setScreens([...screens, emptyScreen(screens.length + 1)]); setActiveScreen(screens.length); }} disabled={screens.length >= 10}>+ Screen</button>
+          </div>
+          {screen && (
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 12 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <input value={screen.id} onChange={(e) => { const c = [...screens]; c[si] = { ...screen, id: e.target.value }; setScreens(c); }} style={{ ...input, width: 150, fontFamily: "monospace" }} title="Screen ID" />
+                <input value={screen.title} onChange={(e) => { const c = [...screens]; c[si] = { ...screen, title: e.target.value }; setScreens(c); }} placeholder="Step title" style={{ ...input, flex: 1 }} />
+              </div>
+              <div onDragOver={(e) => { e.preventDefault(); setOverScreen(si); }} onDragLeave={() => setOverScreen(null)} onDrop={(e) => { e.preventDefault(); dropFieldOnto(si); }}
+                style={{ minHeight: 140, border: `2px dashed ${overScreen === si ? "#111827" : "#d1d5db"}`, borderRadius: 10, padding: 8, background: overScreen === si ? "#f3f4f6" : "#fff" }}>
+                {screen.fields.length === 0 && <div style={{ color: "#9ca3af", fontSize: 13, textAlign: "center", padding: 20 }}>Drag elements here ✨</div>}
+                {screen.fields.map((f, fi) => (
+                  <div key={fi} draggable
+                    onDragStart={() => setDragField({ si, fi })}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropFieldOnto(si, fi); }}
+                    style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 8, marginBottom: 6, background: "#f9fafb", cursor: "move" }}>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, color: "#6b7280" }}>
+                      <span title="Drag to reorder">⠿</span><strong>{PALETTE.find((p) => p.kind === f.kind)?.icon} {paletteLabel(f.kind)}</strong>
+                      <span style={{ marginLeft: "auto" }} />
+                      <button onClick={() => { const c = [...screens]; c[si] = { ...screen, fields: screen.fields.filter((_, x) => x !== fi) }; setScreens(c); }} style={{ border: "none", background: "none", cursor: "pointer", color: "#991b1b" }}>✕</button>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                      <input value={f.label} onChange={(e) => patchField(fi, { label: e.target.value })} placeholder="Label" style={{ ...input, flex: 1, minWidth: 120 }} />
+                      <input value={f.name} onChange={(e) => patchField(fi, { name: e.target.value })} placeholder="field_name" style={{ ...input, width: 130, fontFamily: "monospace", fontSize: 12 }} />
+                      <select value={f.kind} onChange={(e) => patchField(fi, { kind: e.target.value })} style={{ ...input, fontSize: 12 }}>
+                        {PALETTE.map((p) => <option key={p.kind} value={p.kind}>{p.label}</option>)}
+                      </select>
+                      <label style={{ fontSize: 12 }}><input type="checkbox" checked={!!f.required} onChange={(e) => patchField(fi, { required: e.target.checked })} /> required</label>
+                    </div>
+                    {(f.kind === "dropdown" || f.kind === "checkbox" || f.kind === "radio") && (
+                      <input value={(f.options ?? []).join(", ")} onChange={(e) => patchField(fi, { options: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} placeholder="Option 1, Option 2, Option 3" style={{ ...input, width: "100%", marginTop: 6, fontSize: 12 }} />
+                    )}
+                    {f.kind === "text" && (
+                      <input value={f.placeholder ?? ""} onChange={(e) => patchField(fi, { placeholder: e.target.value })} placeholder="Placeholder / helper text (optional)" style={{ ...input, width: "100%", marginTop: 6, fontSize: 12 }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>Tip: drag fields to reorder, or drop them on another screen via the screen tabs. Screens run in tab order.</div>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button style={btn} onClick={onSave} disabled={busy}>Save draft</button>
+            <button style={btnGhost} onClick={onCancel}>Cancel</button>
+          </div>
+        </div>
+        {/* Preview */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 6 }}>WHATSAPP PREVIEW</div>
+          <PhonePreview screen={screen} flowName={name} />
+        </div>
+      </div>
     </div>
   );
 }
