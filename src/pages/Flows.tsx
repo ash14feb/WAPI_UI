@@ -79,7 +79,7 @@ const ID_RE = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
 export function validateBuilder(name: string, screens: FlowScreen[]): string[] {
   const errors: string[] = [];
   if (!name.trim()) errors.push("Flow name is required");
-  else if (!/^[A-Za-z0-9_ ]{1,100}$/.test(name)) errors.push("Flow name: letters, numbers, spaces, underscores only (max 100)");
+  else if (!/^[a-z0-9_]{1,100}$/.test(name)) errors.push('Flow name must be lowercase letters, numbers, underscores only (e.g. cod_confirm_form) — Meta rejects spaces/capitals with "Invalid parameter"');
   if (screens.length === 0 || screens.length > 10) errors.push("Flow needs 1–10 screens");
   const screenIds = new Set<string>();
   screens.forEach((s, i) => {
