@@ -160,6 +160,21 @@ export function TemplatesPage() {
   const [codeExpiry, setCodeExpiry] = useState("10");
   const [creating, setCreating] = useState(false);
 
+  interface TemplateButton {
+    type: "URL" | "PHONE_NUMBER" | "QUICK_REPLY" | "COPY_CODE" | "FLOW";
+    text: string;
+    url: string;
+    phoneNumber: string;
+    example: string;
+    flowId: string;
+    navigateScreen: string;
+  }
+  const [buttons, setButtons] = useState<TemplateButton[]>([]);
+
+  function emptyButton(): TemplateButton {
+    return { type: "QUICK_REPLY", text: "", url: "", phoneNumber: "", example: "", flowId: "", navigateScreen: "" };
+  }
+
   function handleAddVariable() {
     const nextIdx = countVars(bodyText) + 1;
     setBodyText((prev) => (prev ? `${prev} {{${nextIdx}}}` : `{{${nextIdx}}}`));
@@ -215,6 +230,7 @@ export function TemplatesPage() {
     setFooterText("");
     setSampleMap({});
     setCodeExpiry("10");
+    setButtons([]);
     setServerDetails(null);
   }
 
@@ -246,6 +262,14 @@ export function TemplatesPage() {
     try {
       const varCount = countVars(bodyText);
       const exList = Array.from({ length: varCount }, (_, i) => (sampleMap[i + 1] ?? "").trim());
+      const btnPayload = buttons.map((b) => ({
+        type: b.type,
+        text: b.text.trim(),
+        ...(b.type === "URL" ? { url: b.url.trim(), ...(b.url.includes("{{1}}") && b.example.trim() ? { example: b.example.trim() } : {}) } : {}),
+        ...(b.type === "PHONE_NUMBER" ? { phoneNumber: b.phoneNumber.trim() } : {}),
+        ...(b.type === "COPY_CODE" && b.example.trim() ? { example: b.example.trim() } : {}),
+        ...(b.type === "FLOW" ? { flowId: b.flowId.trim(), ...(b.navigateScreen.trim() ? { navigateScreen: b.navigateScreen.trim() } : {}) } : {}),
+      }));
       await api("/api/v1/whatsapp/templates", {
         method: "POST",
         body: JSON.stringify({
@@ -259,6 +283,7 @@ export function TemplatesPage() {
           bodyText: isAuth ? undefined : bodyText.trim(),
           footerText: isAuth ? undefined : footerText.trim() || undefined,
           examples: isAuth || varCount === 0 ? undefined : exList,
+          buttons: isAuth || btnPayload.length === 0 ? undefined : btnPayload,
           codeExpirationMinutes: isAuth ? Number(codeExpiry) || 10 : undefined,
         }),
       });
@@ -293,6 +318,7 @@ export function TemplatesPage() {
     footerText?: string;
     examples?: string;
     codeExpiry?: string;
+    buttons?: string;
   }
 
   const fieldErrors: FieldErrors = {};
@@ -331,6 +357,31 @@ export function TemplatesPage() {
     if (footerText.length > 60) fieldErrors.footerText = "Max 60 characters.";
     if (missingSamples) {
       fieldErrors.examples = `Provide sample values for all ${varCount} variable(s). Meta requires real examples to approve templates.`;
+    }
+    if (!isAuth && buttons.length > 0) {
+      const ofType = (t: string) => buttons.filter((b) => b.type === t).length;
+      if (buttons.length > 10) fieldErrors.buttons = "Max 10 buttons per template.";
+      else if (ofType("URL") > 2) fieldErrors.buttons = "Max 2 URL buttons per template.";
+      else if (ofType("PHONE_NUMBER") > 1) fieldErrors.buttons = "Max 1 phone-number button per template.";
+      else if (ofType("COPY_CODE") > 1) fieldErrors.buttons = "Max 1 copy-code button per template.";
+      else if (ofType("FLOW") > 1) fieldErrors.buttons = "Max 1 Flow button per template.";
+      else {
+        for (let i = 0; i < buttons.length; i++) {
+          const b = buttons[i];
+          if (!b.text.trim()) { fieldErrors.buttons = `Button ${i + 1}: label text is required (max 25 chars).`; break; }
+          if (b.text.trim().length > 25) { fieldErrors.buttons = `Button ${i + 1}: label max 25 characters.`; break; }
+          if (b.type === "URL") {
+            if (!b.url.trim()) { fieldErrors.buttons = `Button ${i + 1}: URL is required (https://…).`; break; }
+            if (!/^https?:\/\/.+/.test(b.url.trim())) { fieldErrors.buttons = `Button ${i + 1}: URL must start with http(s)://.`; break; }
+            const vars = (b.url.match(/\{\{\d+\}\}/g) ?? []).length;
+            if (vars > 1) { fieldErrors.buttons = `Button ${i + 1}: only one trailing {{1}} variable allowed.`; break; }
+            if (vars === 1 && !/\{\{1\}\}$/.test(b.url.trim())) { fieldErrors.buttons = `Button ${i + 1}: {{1}} must be at the end of the URL.`; break; }
+            if (vars === 1 && !b.example.trim()) { fieldErrors.buttons = `Button ${i + 1}: sample URL required when using {{1}} (e.g. https://shop.com/order/ABC123).`; break; }
+          }
+          if (b.type === "PHONE_NUMBER" && !b.phoneNumber.trim()) { fieldErrors.buttons = `Button ${i + 1}: phone number is required (e.g. +919876543210).`; break; }
+          if (b.type === "FLOW" && !b.flowId.trim()) { fieldErrors.buttons = `Button ${i + 1}: published Flow ID is required.`; break; }
+        }
+      }
     }
   }
 
@@ -797,6 +848,101 @@ export function TemplatesPage() {
                       />
                       {fieldErrors.footerText && <span className="field-error">{fieldErrors.footerText}</span>}
                     </label>
+
+                    <div className="span-2" style={{ background: "#f8fafc", border: "1px solid var(--border)", borderRadius: "10px", padding: "0.875rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                        <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>Call-to-Action Buttons (Optional)</span>
+                        <button
+                          type="button"
+                          className="ghost-btn"
+                          style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", color: "#00a884" }}
+                          onClick={() => buttons.length < 10 && setButtons((p) => [...p, emptyButton()])}
+                          disabled={buttons.length >= 10}
+                        >
+                          <Plus size={12} /> Add button {buttons.length > 0 && `(${buttons.length}/10)`}
+                        </button>
+                      </div>
+                      <div className="muted tiny" style={{ marginBottom: "0.5rem" }}>
+                        Max 10 total · up to 2 URL, 1 phone, 1 copy-code, 1 Flow. URL buttons support one trailing variable, e.g. https://shop.com/track/{"{{1}}"}.
+                      </div>
+                      {buttons.length === 0 && (
+                        <div className="muted tiny">No buttons — template sends as plain text.</div>
+                      )}
+                      {buttons.map((b, i) => (
+                        <div key={i} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "0.625rem", marginBottom: "0.5rem" }}>
+                          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
+                            <select value={b.type} onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, type: e.target.value as TemplateButton["type"] } : x))} style={{ fontSize: "0.8125rem" }}>
+                              <option value="QUICK_REPLY">↩ Quick reply</option>
+                              <option value="URL">🔗 URL button</option>
+                              <option value="PHONE_NUMBER">📞 Call button</option>
+                              <option value="COPY_CODE">📋 Copy code</option>
+                              <option value="FLOW">📄 Flow button</option>
+                            </select>
+                            <input
+                              value={b.text}
+                              onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, text: e.target.value } : x))}
+                              placeholder="Button label (max 25)"
+                              maxLength={25}
+                              style={{ flex: 1, fontSize: "0.8125rem" }}
+                            />
+                            <button type="button" className="ghost-btn" onClick={() => setButtons((p) => p.filter((_, xI) => xI !== i))} title="Remove button">
+                              <X size={15} />
+                            </button>
+                          </div>
+                          {b.type === "URL" && (
+                            <>
+                              <input
+                                value={b.url}
+                                onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, url: e.target.value } : x))}
+                                placeholder="https://shop.com/track/{{1}} ({{1}} optional, must be trailing)"
+                                style={{ width: "100%", fontSize: "0.8125rem", marginBottom: "0.35rem" }}
+                              />
+                              {b.url.includes("{{1}}") && (
+                                <input
+                                  value={b.example}
+                                  onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, example: e.target.value } : x))}
+                                  placeholder="Sample URL, e.g. https://shop.com/track/ORD-9921"
+                                  style={{ width: "100%", fontSize: "0.8125rem" }}
+                                />
+                              )}
+                            </>
+                          )}
+                          {b.type === "PHONE_NUMBER" && (
+                            <input
+                              value={b.phoneNumber}
+                              onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, phoneNumber: e.target.value } : x))}
+                              placeholder="+919876543210"
+                              style={{ width: "100%", fontSize: "0.8125rem" }}
+                            />
+                          )}
+                          {b.type === "COPY_CODE" && (
+                            <input
+                              value={b.example}
+                              onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, example: e.target.value } : x))}
+                              placeholder="Sample code, e.g. PROMO10 (optional)"
+                              style={{ width: "100%", fontSize: "0.8125rem" }}
+                            />
+                          )}
+                          {b.type === "FLOW" && (
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <input
+                                value={b.flowId}
+                                onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, flowId: e.target.value } : x))}
+                                placeholder="Published Flow ID"
+                                style={{ flex: 1, fontSize: "0.8125rem" }}
+                              />
+                              <input
+                                value={b.navigateScreen}
+                                onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, navigateScreen: e.target.value } : x))}
+                                placeholder="Screen ID (optional)"
+                                style={{ flex: 1, fontSize: "0.8125rem" }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {fieldErrors.buttons && <span className="field-error" style={{ display: "block", marginTop: "0.25rem" }}>{fieldErrors.buttons}</span>}
+                    </div>
                   </>
                 ) : (
                   <label className="span-2">
@@ -869,6 +1015,15 @@ export function TemplatesPage() {
                         </div>
                         {footerText.trim() && (
                           <div className="muted tiny preview-footer">{footerText.trim()}</div>
+                        )}
+                        {buttons.length > 0 && (
+                          <div style={{ marginTop: "0.4rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                            {buttons.map((b, i) => (
+                              <div key={i} className="preview-otp-btn" style={{ justifyContent: "center" }}>
+                                <span>{b.type === "URL" ? "🔗" : b.type === "PHONE_NUMBER" ? "📞" : b.type === "COPY_CODE" ? "📋" : b.type === "FLOW" ? "📄" : "↩"} {b.text.trim() || "Button label"}</span>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </>
                     )}

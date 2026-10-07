@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError, asArray, uploadFile } from "../api/client";
 import { useAccounts } from "../accounts/AccountContext";
 import type { Campaign, Contact, MessageTemplate } from "../api/types";
-import { countVars, extractBodyText, extractHeader, renderPreview } from "../inbox/templatePreview";
+import { countVars, extractBodyText, extractButtons, extractHeader, renderPreview } from "../inbox/templatePreview";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
 import {
   Megaphone,
@@ -37,6 +37,7 @@ export function CampaignsPage() {
   const [name, setName] = useState("");
   const [templateId, setTemplateId] = useState("");
   const [params, setParams] = useState<string[]>([]);
+  const [buttonVals, setButtonVals] = useState<Record<number, string>>({});
   const [scheduledAt, setScheduledAt] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [headerHandle, setHeaderHandle] = useState("");
@@ -85,12 +86,19 @@ export function CampaignsPage() {
   const needsHeaderMedia = header !== null && header.format !== "TEXT";
   const bodyText = chosenTemplate ? extractBodyText(chosenTemplate.componentsJson) : null;
   const varCount = bodyText ? countVars(bodyText) : 0;
+  // Buttons needing per-send values: variable URL suffix ({{1}}) + copy codes.
+  const buttonsNeedingValues = chosenTemplate
+    ? extractButtons(chosenTemplate.componentsJson)
+        .map((b, i) => ({ ...b, index: i }))
+        .filter((b) => (b.type === "URL" && /\{\{1\}\}$/.test(b.url ?? "")) || b.type === "COPY_CODE")
+    : [];
 
   function onTemplateChange(id: string) {
     setTemplateId(id);
     const tmpl = templates.find((t) => t.id === id);
     const count = tmpl ? countVars(extractBodyText(tmpl.componentsJson) || "") : 0;
     setParams(Array(count).fill(""));
+    setButtonVals({});
     setHeaderHandle("");
     setHeaderLink("");
   }
@@ -131,6 +139,7 @@ export function CampaignsPage() {
     templateId.length > 0 &&
     selected.size > 0 &&
     params.every((p) => p.trim().length > 0) &&
+    buttonsNeedingValues.every((b) => (buttonVals[b.index] ?? "").trim().length > 0) &&
     (!needsHeaderMedia || Boolean(headerHandle || headerLink.trim()));
 
   async function onCreate(e: FormEvent) {
@@ -149,6 +158,9 @@ export function CampaignsPage() {
           contactIds: [...selected],
           ...(selectedId ? { whatsappAccountId: selectedId } : {}),
           parameters: params.length > 0 ? params : undefined,
+          buttons: buttonsNeedingValues.length > 0
+            ? buttonsNeedingValues.map((b) => ({ index: b.index, value: (buttonVals[b.index] ?? "").trim() }))
+            : undefined,
           headerMedia:
             needsHeaderMedia && header
               ? {
@@ -164,6 +176,7 @@ export function CampaignsPage() {
       setTemplateId("");
       setSelected(new Set());
       setParams([]);
+      setButtonVals({});
       setScheduledAt("");
       setShowCreate(false);
       await load();
@@ -463,6 +476,28 @@ export function CampaignsPage() {
                           next[idx] = e.target.value;
                           setParams(next);
                         }}
+                        required
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {/* Button Values (variable URL suffixes + copy codes) */}
+              {buttonsNeedingValues.length > 0 && (
+                <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#334155" }}>
+                    Button Values ({buttonsNeedingValues.length})
+                  </div>
+                  {buttonsNeedingValues.map((b) => (
+                    <label key={b.index} style={{ margin: 0 }}>
+                      <span className="muted small">
+                        {b.type === "COPY_CODE" ? `Copy-code for "${b.text ?? "button"}"` : `URL suffix {{1}} for "${b.text ?? "button"}"`}
+                      </span>
+                      <input
+                        value={buttonVals[b.index] ?? ""}
+                        placeholder={b.type === "COPY_CODE" ? "e.g. PROMO10" : "e.g. ORD-9921 (appended to button URL)"}
+                        onChange={(e) => setButtonVals((p) => ({ ...p, [b.index]: e.target.value }))}
                         required
                       />
                     </label>
