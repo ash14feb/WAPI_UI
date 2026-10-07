@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { accountLabel, useAccounts } from "../accounts/AccountContext";
-import { Building2, ChevronDown, Menu } from "lucide-react";
+import { Building2, ChevronDown, Menu, PanelLeft } from "lucide-react";
 
 function AccountSwitcher() {
   const { accounts, selectedId, select, loading } = useAccounts();
@@ -58,6 +58,24 @@ function AccountSwitcher() {
 export function AppShell() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem("iwapi.sidebarCollapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  function toggleCollapse() {
+    setCollapsed((prev) => {
+      try {
+        window.localStorage.setItem("iwapi.sidebarCollapsed", prev ? "0" : "1");
+      } catch {
+        // Non-fatal; layout still toggles for the session.
+      }
+      return !prev;
+    });
+  }
 
   // Close mobile sidebar whenever route changes
   useEffect(() => {
@@ -80,13 +98,15 @@ export function AppShell() {
     "/campaigns": "Broadcast Campaigns",
     "/contacts": "Audience Directory",
     "/bots": "Chatbot Auto-Replies",
+    "/flows": "Flow Builder Studio",
+    "/integrations": "Connected Integrations",
     "/settings": "Integration & Settings",
   };
 
   const currentTitle = routeTitles[location.pathname] || "Enterprise Console";
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
       {sidebarOpen && (
         <div
           className="sidebar-backdrop"
@@ -94,7 +114,7 @@ export function AppShell() {
           aria-hidden="true"
         />
       )}
-      <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
       <div className="app-content">
         <header className="top-header">
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", minWidth: 0 }}>
@@ -106,6 +126,16 @@ export function AppShell() {
               title="Open menu"
             >
               <Menu size={20} />
+            </button>
+            <button
+              type="button"
+              className="desktop-collapse-btn"
+              onClick={toggleCollapse}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!collapsed}
+            >
+              <PanelLeft size={18} />
             </button>
             <div className="top-breadcrumb">
               <span>ImmerzoWAPI</span>

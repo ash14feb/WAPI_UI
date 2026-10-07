@@ -4,8 +4,6 @@ import logoUrl from "../../iwapilogo.png";
 import {
   LayoutDashboard,
   MessageSquare,
-  Plug,
-  ClipboardList,
   FileText,
   SendHorizontal,
   Users,
@@ -14,26 +12,47 @@ import {
   LogOut,
   ShieldCheck,
   X,
+  Plug,
+  ClipboardList,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 
-const LINKS = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/inbox", label: "Live Inbox", icon: MessageSquare },
-  { to: "/templates", label: "Templates", icon: FileText },
-  { to: "/campaigns", label: "Campaigns", icon: SendHorizontal },
-  { to: "/contacts", label: "Contacts", icon: Users },
-  { to: "/bots", label: "Chatbot", icon: Bot },
-  { to: "/flows", label: "Flows", icon: ClipboardList },
-  { to: "/integrations", label: "Integrations", icon: Plug },
-  { to: "/settings", label: "Settings", icon: Settings },
+const SECTIONS = [
+  {
+    caption: "Workspace",
+    links: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/inbox", label: "Live Inbox", icon: MessageSquare },
+    ],
+  },
+  {
+    caption: "Engage",
+    links: [
+      { to: "/templates", label: "Templates", icon: FileText },
+      { to: "/campaigns", label: "Campaigns", icon: SendHorizontal },
+      { to: "/contacts", label: "Contacts", icon: Users },
+      { to: "/bots", label: "Chatbot", icon: Bot },
+      { to: "/flows", label: "Flows", icon: ClipboardList },
+    ],
+  },
+  {
+    caption: "System",
+    links: [
+      { to: "/integrations", label: "Integrations", icon: Plug },
+      { to: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
 interface SidebarProps {
   mobileOpen?: boolean;
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
+export function Sidebar({ mobileOpen = false, onClose, collapsed = false, onToggleCollapse }: SidebarProps) {
   const { user, tenant, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -46,7 +65,7 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const initial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
 
   return (
-    <nav className={`app-sidebar${mobileOpen ? " mobile-open" : ""}`} aria-label="Main Navigation">
+    <nav className={`app-sidebar${mobileOpen ? " mobile-open" : ""}${collapsed ? " is-collapsed" : ""}`} aria-label="Main Navigation">
       <div className="brand">
         <div className="brand-logo-container">
           <img
@@ -81,27 +100,35 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
       </div>
 
       <ul className="side-nav">
-        {LINKS.map((l) => {
-          const Icon = l.icon;
-          return (
-            <li key={l.to}>
-              <NavLink
-                to={l.to}
-                className={({ isActive }) => `side-link${isActive ? " active" : ""}`}
-                onClick={() => onClose?.()}
-              >
-                <span className="side-icon">
-                  <Icon size={18} />
-                </span>
-                <span>{l.label}</span>
-              </NavLink>
-            </li>
-          );
-        })}
+        {SECTIONS.map((section) => (
+          <li key={section.caption} className="side-section">
+            <span className="side-caption" aria-hidden="true">{section.caption}</span>
+            <ul className="side-section-links">
+              {section.links.map((l) => {
+                const Icon = l.icon;
+                return (
+                  <li key={l.to}>
+                    <NavLink
+                      to={l.to}
+                      title={collapsed ? l.label : undefined}
+                      className={({ isActive }) => `side-link${isActive ? " active" : ""}`}
+                      onClick={() => onClose?.()}
+                    >
+                      <span className="side-icon">
+                        <Icon size={18} />
+                      </span>
+                      <span className="side-label">{l.label}</span>
+                    </NavLink>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+        ))}
       </ul>
 
       <div className="side-footer">
-        <div className="side-workspace">
+        <div className="side-workspace" title={collapsed ? `${tenant?.name ?? "Enterprise Workspace"} · ${user?.email ?? ""}` : undefined}>
           <div className="side-avatar">{initial}</div>
           <div className="side-workspace-info">
             <span className="side-workspace-name">{tenant?.name ?? "Enterprise Workspace"}</span>
@@ -109,10 +136,24 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           </div>
         </div>
 
-        <button className="side-signout" onClick={handleLogout} title="Sign Out">
+        <button className="side-signout" onClick={handleLogout} title={collapsed ? "Sign Out" : "Sign Out"}>
           <LogOut size={15} />
-          <span>Sign out</span>
+          <span className="side-label">Sign out</span>
         </button>
+
+        {onToggleCollapse && (
+          <button
+            type="button"
+            className="side-collapse-btn"
+            onClick={onToggleCollapse}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
+            <span className="side-label">Collapse</span>
+          </button>
+        )}
       </div>
     </nav>
   );
