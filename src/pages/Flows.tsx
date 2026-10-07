@@ -15,12 +15,44 @@ const pill = (s: string): React.CSSProperties => {
   return { display: "inline-block", padding: "2px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: ok ? "#ecfdf5" : "#f3f4f6", color: ok ? "#065f46" : "#374151", border: `1px solid ${ok ? "#6ee7b7" : "#d1d5db"}` };
 };
 
-function emptyScreen(n: number): FlowScreen { return { id: `SCREEN_${n}`, title: `Step ${n}`, fields: [] }; }
+function seqLetters(i: number): string {
+  let s = "";
+  let n = i;
+  do {
+    s = String.fromCharCode(65 + (n % 26)) + s;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return s;
+}
+function emptyScreen(n: number): FlowScreen { return { id: `SCREEN_${seqLetters(n - 1)}`, title: `Step ${n}`, fields: [] }; }
 function emptyField(kind = "text"): FlowField {
   const labelMap: Record<string, string> = { text: "Your answer", textarea: "Details", number: "Quantity", email: "Email address", dropdown: "Choose an option", checkbox: "Select all that apply", radio: "Pick one", date: "Preferred date" };
   const nameMap: Record<string, string> = { text: "answer", textarea: "details", number: "quantity", email: "email", dropdown: "choice", checkbox: "choices", radio: "choice", date: "date" };
   const needsOptions = kind === "dropdown" || kind === "checkbox" || kind === "radio";
-  return { kind, label: labelMap[kind] ?? "Question", name: `${nameMap[kind] ?? "field"}_${Math.floor(Math.random() * 900 + 100)}`, required: false, options: needsOptions ? ["Option 1", "Option 2"] : [] };
+  const suffix = seqLetters(Math.floor(Math.random() * 26)).toLowerCase() + seqLetters(Math.floor(Math.random() * 26)).toLowerCase();
+  return { kind, label: labelMap[kind] ?? "Question", name: `${nameMap[kind] ?? "field"}_${suffix}`, required: false, options: needsOptions ? ["Option 1", "Option 2"] : [] };
+}
+/** Rewrites digits to letters so old drafts (SCREEN_1, answer_123) pass Meta. */
+function autoFixIds(screens: FlowScreen[]): FlowScreen[] {
+  const usedScreens = new Set<string>();
+  return screens.map((s, i) => {
+    let id = s.id.replace(/[0-9]/g, (d) => seqLetters(Number(d)));
+    if (!/^[A-Za-z]/.test(id)) id = `SCREEN_${id}`;
+    if (usedScreens.has(id)) id = `${id}_${seqLetters(i)}`;
+    usedScreens.add(id);
+    const usedNames = new Set<string>();
+    return {
+      ...s,
+      id,
+      fields: s.fields.map((f) => {
+        let nm = f.name.replace(/[0-9]/g, (d) => seqLetters(Number(d)).toLowerCase());
+        if (!/^[A-Za-z]/.test(nm)) nm = `field_${nm}`;
+        if (usedNames.has(nm)) nm = `${nm}_${seqLetters(usedNames.size).toLowerCase()}`;
+        usedNames.add(nm);
+        return { ...f, name: nm };
+      }),
+    };
+  });
 }
 
 const PALETTE: { kind: string; icon: string; label: string; hint: string }[] = [
@@ -73,7 +105,8 @@ function prettyAnswers(json: string): string {
   } catch { return json.slice(0, 200); }
 }
 
-const ID_RE = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
+const ID_RE = /^[A-Za-z][A-Za-z_]{0,63}$/;
+const ID_HINT = "must start with a letter, alphabets and underscores only (no numbers — Meta rejects digits)";
 
 /** UI-level validation mirroring Meta + backend rules — blocks save with messages. */
 export function validateBuilder(name: string, screens: FlowScreen[]): string[] {
@@ -84,7 +117,7 @@ export function validateBuilder(name: string, screens: FlowScreen[]): string[] {
   const screenIds = new Set<string>();
   screens.forEach((s, i) => {
     const label = `Screen ${i + 1}`;
-    if (!ID_RE.test(s.id)) errors.push(`${label}: id "${s.id}" must start with a letter, letters/numbers/underscore only`);
+    if (!ID_RE.test(s.id)) errors.push(`${label}: id "${s.id}" ${ID_HINT}`);
     else if (screenIds.has(s.id)) errors.push(`${label}: duplicate screen id "${s.id}"`);
     else screenIds.add(s.id);
     if (!s.title.trim()) errors.push(`${label} (${s.id}): title is required`);
@@ -92,7 +125,7 @@ export function validateBuilder(name: string, screens: FlowScreen[]): string[] {
     const names = new Set<string>();
     s.fields.forEach((f, j) => {
       const fl = `${label} → field ${j + 1}`;
-      if (!ID_RE.test(f.name)) errors.push(`${fl}: name "${f.name}" must start with a letter, letters/numbers/underscore only`);
+      if (!ID_RE.test(f.name)) errors.push(`${fl}: name "${f.name}" ${ID_HINT}`);
       else if (names.has(f.name)) errors.push(`${fl}: duplicate field name "${f.name}"`);
       else names.add(f.name);
       if (!f.label.trim()) errors.push(`${fl} (${f.name || "?"}): label is required`);
@@ -361,6 +394,7 @@ function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, fo
             </div>
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button style={btnGhost} onClick={() => setScreens(autoFixIds(screens))} title="Rewrite digits in screen/field ids to letters (Meta forbids numbers)">Auto-fix IDs</button>
             <button style={btn} onClick={onSave} disabled={busy}>Save draft</button>
             <button style={btnGhost} onClick={onCancel}>Cancel</button>
           </div>
