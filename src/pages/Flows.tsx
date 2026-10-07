@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
+import { ButtonSpinner, PageLoader } from "../components/Loader";
 
 interface FlowField { kind: string; label: string; name: string; required?: boolean; placeholder?: string; options?: string[]; }
 interface FlowScreen { id: string; title: string; fields: FlowField[]; }
@@ -101,7 +102,10 @@ function PhonePreview({ screen, flowName }: { screen: FlowScreen | undefined; fl
 function prettyAnswers(json: string): string {
   try {
     const o = JSON.parse(json) as Record<string, unknown>;
-    return Object.entries(o).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : String(v)}`).join("  |  ");
+    const parts = Object.entries(o)
+      .filter(([k]) => k !== "flow_token")
+      .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : String(v)}`);
+    return parts.length > 0 ? parts.join("  |  ") : "(no answers — form data missing)";
   } catch { return json.slice(0, 200); }
 }
 
@@ -139,7 +143,8 @@ export function validateBuilder(name: string, screens: FlowScreen[]): string[] {
 export function FlowsPage() {
   const [flows, setFlows] = useState<Flow[]>([]);
   const [msg, setMsg] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [showBuilder, setShowBuilder] = useState(false);
   const [editing, setEditing] = useState<Flow | null>(null);
   const [name, setName] = useState("");
@@ -154,8 +159,16 @@ export function FlowsPage() {
       const d = await api<{ flows: Flow[] }>("/api/v1/flows");
       setFlows(d.flows ?? []);
     } catch { setMsg("Could not load flows — log in again"); }
+    finally { setInitialLoading(false); }
   }
   useEffect(() => { void load(); }, []);
+
+  const busy = busyAction !== null;
+  async function runAction(key: string, fn: () => Promise<void>) {
+    setBusyAction(key); setMsg("");
+    try { await fn(); } catch (err) { setMsg(err instanceof Error ? err.message : "Action failed"); }
+    finally { setBusyAction(null); }
+  }
 
   function openNew() {
     setEditing(null); setName(""); setScreens([emptyScreen(1)]); setShowBuilder(true);
@@ -175,60 +188,58 @@ export function FlowsPage() {
     const errs = validateBuilder(name, screens);
     setFormErrors(errs);
     if (errs.length > 0) { setMsg(`Fix ${errs.length} validation issue(s) below before saving`); return; }
-    setBusy(true); setMsg("");
-    try {
+    await runAction("save", async () => {
       if (editing) {
         await api(`/api/v1/flows/${editing.id}`, { method: "PUT", body: JSON.stringify({ name, screens }) });
       } else {
         await api("/api/v1/flows", { method: "POST", body: JSON.stringify({ name, categories: ["OTHER"], screens }) });
       }
-      setShowBuilder(false); void load();
-    } catch (err) { setMsg(err instanceof Error ? err.message : "Save failed"); }
-    setBusy(false);
+      setShowBuilder(false); setFormErrors([]); await load();
+    });
   }
 
   async function publish(f: Flow) {
-    setBusy(true); setMsg("");
-    try {
+    await runAction(`publish:${f.id}`, async () => {
       await api(`/api/v1/flows/${f.id}/publish`, { method: "POST", body: JSON.stringify({}) });
-      setMsg(`Published ${f.name} to Meta`); void load();
-    } catch (err) { setMsg(err instanceof Error ? err.message : "Publish failed"); }
-    setBusy(false);
+      setMsg(`Published ${f.name} to Meta`); await load();
+    });
   }
 
   async function sync() {
-    setBusy(true); setMsg("");
-    try {
+    await runAction("sync", async () => {
       const d = await api<{ synced: number }>("/api/v1/flows/sync", { method: "POST", body: JSON.stringify({}) });
-      setMsg(`Synced ${d.synced} flows from Meta`); void load();
-    } catch (err) { setMsg(err instanceof Error ? err.message : "Sync failed"); }
-    setBusy(false);
+      setMsg(`Synced ${d.synced} flows from Meta`); await load();
+    });
   }
 
   async function remove(f: Flow) {
     if (!confirm(`Delete draft ${f.name}?`)) return;
-    try { await api(`/api/v1/flows/${f.id}`, { method: "DELETE" }); void load(); }
-    catch (err) { setMsg(err instanceof Error ? err.message : "Delete failed"); }
+    await runAction(`delete:${f.id}`, async () => {
+      await api(`/api/v1/flows/${f.id}`, { method: "DELETE" }); await load();
+    });
   }
 
   async function loadResponses(f: Flow) {
     setRespFor(f);
-    try {
+    setResponses([]);
+    await runAction(`responses:${f.id}`, async () => {
       const d = await api<{ responses: FlowResponse[] }>(`/api/v1/flows/${f.id}/responses`);
       setResponses(d.responses ?? []);
-    } catch { setResponses([]); }
+    });
   }
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto", height: "100%", overflowY: "auto", paddingBottom: 48 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <h1 style={{ margin: 0 }}>Flows</h1>
-        <button style={btnGhost} onClick={() => void sync()} disabled={busy}>Sync from Meta</button>
+        <button style={btnGhost} onClick={() => void sync()} disabled={busy}>{busyAction === "sync" && <ButtonSpinner />}Sync from Meta</button>
         <button style={btn} onClick={openNew}>+ New flow</button>
       </div>
       <p style={{ color: "#6b7280" }}>Static form flows — build screens, publish to Meta, send as interactive messages. Like Templates, Meta is the store of record.</p>
       {msg && <p>{msg}</p>}
-      {flows.length === 0 ? (
+      {initialLoading ? (
+        <PageLoader message="Loading flows…" description="Fetching your drafts and published flows." />
+      ) : flows.length === 0 ? (
         <p style={{ color: "#6b7280" }}>No flows yet — create one or Sync from Meta.</p>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
@@ -240,13 +251,14 @@ export function FlowsPage() {
                 <span style={{ color: "#9ca3af", fontSize: 12 }}>v{f.version}{f.metaFlowId ? ` · Meta ${f.metaFlowId}` : " · local only"}</span>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                {f.status === "DRAFT" && <><button style={btnGhost} onClick={() => openEdit(f)}>Edit</button><button style={btn} onClick={() => void publish(f)} disabled={busy}>Publish to Meta</button><button style={btnGhost} onClick={() => void remove(f)}>Delete</button></>}
-                {f.status === "PUBLISHED" && <><button style={btn} onClick={() => setSendFor(f)}>Send</button><button style={btnGhost} onClick={() => void loadResponses(f)}>Responses</button></>}
+                {f.status === "DRAFT" && <><button style={btnGhost} onClick={() => openEdit(f)} disabled={busy}>Edit</button><button style={btn} onClick={() => void publish(f)} disabled={busy}>{busyAction === `publish:${f.id}` && <ButtonSpinner />}Publish to Meta</button><button style={btnGhost} onClick={() => void remove(f)} disabled={busy}>{busyAction === `delete:${f.id}` && <ButtonSpinner />}Delete</button></>}
+                {f.status === "PUBLISHED" && <><button style={btn} onClick={() => setSendFor(f)}>Send</button><button style={btnGhost} onClick={() => void loadResponses(f)} disabled={busy}>{busyAction === `responses:${f.id}` && <ButtonSpinner />}Responses</button></>}
               </div>
               {respFor?.id === f.id && (
                 <div style={{ marginTop: 10 }}>
                   <h4 style={{ margin: "4px 0" }}>Responses ({responses.length})</h4>
-                  {responses.length === 0 ? <p style={{ color: "#6b7280", fontSize: 13 }}>No answers yet.</p> : (
+                  {busyAction === `responses:${f.id}` ? <p style={{ color: "#6b7280", fontSize: 13 }}><ButtonSpinner />Loading responses…</p> :
+                  responses.length === 0 ? <p style={{ color: "#6b7280", fontSize: 13 }}>No answers yet.</p> : (
                     <div style={{ maxHeight: 220, overflowY: "auto", border: "1px solid #f3f4f6", borderRadius: 8 }}>
                       {responses.map((r) => (
                         <div key={r.id} style={{ padding: "6px 10px", borderTop: "1px solid #f3f4f6", fontSize: 13 }}>
@@ -262,16 +274,16 @@ export function FlowsPage() {
         </div>
       )}
 
-      {showBuilder && <FlowBuilder name={name} setName={setName} screens={screens} setScreens={setScreens} editingName={editing?.name} busy={busy} formErrors={formErrors} onSave={() => void save()} onCancel={() => { setShowBuilder(false); setFormErrors([]); }} />}
+      {showBuilder && <FlowBuilder name={name} setName={setName} screens={screens} setScreens={setScreens} editingName={editing?.name} busy={busy} saving={busyAction === "save"} formErrors={formErrors} onSave={() => void save()} onCancel={() => { setShowBuilder(false); setFormErrors([]); }} />}
 
       {sendFor && <SendFlowModal flow={sendFor} onClose={() => setSendFor(null)} />}
     </div>
   );
 }
 
-function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, formErrors, onSave, onCancel }: {
+function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, saving, formErrors, onSave, onCancel }: {
   name: string; setName: (v: string) => void; screens: FlowScreen[]; setScreens: (v: FlowScreen[]) => void;
-  editingName?: string; busy: boolean; formErrors: string[]; onSave: () => void; onCancel: () => void;
+  editingName?: string; busy: boolean; saving: boolean; formErrors: string[]; onSave: () => void; onCancel: () => void;
 }) {
   const [activeScreen, setActiveScreen] = useState(0);
   const [dragKind, setDragKind] = useState<string | null>(null);
@@ -395,8 +407,8 @@ function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, fo
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
             <button style={btnGhost} onClick={() => setScreens(autoFixIds(screens))} title="Rewrite digits in screen/field ids to letters (Meta forbids numbers)">Auto-fix IDs</button>
-            <button style={btn} onClick={onSave} disabled={busy}>Save draft</button>
-            <button style={btnGhost} onClick={onCancel}>Cancel</button>
+            <button style={btn} onClick={onSave} disabled={busy}>{saving && <ButtonSpinner />}{saving ? "Saving…" : "Save draft"}</button>
+            <button style={btnGhost} onClick={onCancel} disabled={busy}>Cancel</button>
           </div>
         </div>
         {/* Preview */}
@@ -414,12 +426,14 @@ function SendFlowModal({ flow, onClose }: { flow: Flow; onClose: () => void }) {
   const [cta, setCta] = useState("Open form");
   const [bodyText, setBodyText] = useState(`Hi! Please fill this form: ${flow.name}`);
   const [msg, setMsg] = useState("");
+  const [sending, setSending] = useState(false);
   async function send(e: React.FormEvent) {
-    e.preventDefault(); setMsg("");
+    e.preventDefault(); setMsg(""); setSending(true);
     try {
       await api(`/api/v1/flows/${flow.id}/send`, { method: "POST", body: JSON.stringify({ to, cta, bodyText }) });
       setMsg("Sent ✓"); 
     } catch (err) { setMsg(err instanceof Error ? err.message : "Send failed"); }
+    finally { setSending(false); }
   }
   return (
     <div style={{ ...card, borderColor: "#111827" }}>
@@ -428,7 +442,7 @@ function SendFlowModal({ flow, onClose }: { flow: Flow; onClose: () => void }) {
         <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="+91..." style={{ ...input, width: 170 }} />
         <input value={cta} onChange={(e) => setCta(e.target.value)} placeholder="Button label" style={{ ...input, width: 140 }} />
         <input value={bodyText} onChange={(e) => setBodyText(e.target.value)} placeholder="Message text" style={{ ...input, flex: 1, minWidth: 220 }} />
-        <button style={btn} type="submit" disabled={!to || !bodyText}>Send</button>
+        <button style={btn} type="submit" disabled={!to || !bodyText || sending}>{sending && <ButtonSpinner />}{sending ? "Sending…" : "Send"}</button>
         <button style={btnGhost} type="button" onClick={onClose}>Close</button>
       </form>
       {msg && <p>{msg}</p>}

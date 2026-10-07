@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
+import { ButtonSpinner } from "../components/Loader";
 
 const card: React.CSSProperties = { border: "1px solid #e5e7eb", borderRadius: 14, padding: 20, marginTop: 16, background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 const btn: React.CSSProperties = { padding: "8px 14px", borderRadius: 8, border: "1px solid #d1d5db", background: "#111827", color: "#fff", cursor: "pointer" };
@@ -83,22 +84,22 @@ export function IntegrationsPage() {
         <p style={{ color: "#6b7280" }}>Order, shipping and abandoned-checkout WhatsApp messages.</p>
         {!status?.configured && <p style={{ color: "#b45309" }}>Backend missing SHOPIFY_API_KEY — set it in API .env first.</p>}
         {status?.connected ? (
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span>Connected: <strong>{status.shop}</strong></span>
-            <button style={btnGhost} onClick={disconnect} disabled={busy}>Disconnect</button>
+          <div>
+            <p>Connected: <strong>{status.shop}</strong></p>
+            <button onClick={disconnect} disabled={busy}>{busy && <ButtonSpinner />}{busy ? "Working…" : "Disconnect"}</button>
           </div>
         ) : (
           <form onSubmit={connect} style={{ display: "flex", gap: 8 }}>
-            <input value={shop} onChange={(e) => setShop(e.target.value)} placeholder="your-store.myshopify.com" style={{ ...input, flex: 1 }} />
-            <button style={btn} type="submit" disabled={busy || !shop}>Connect</button>
+            <input value={shop} onChange={(e) => setShop(e.target.value)} placeholder="your-store.myshopify.com" style={{ flex: 1, padding: 8 }} />
+            <button type="submit" disabled={busy || !shop}>{busy && <ButtonSpinner />}{busy ? "Connecting…" : "Connect"}</button>
           </form>
         )}
         {msg && <p>{msg}</p>}
         <div style={{ marginTop: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <h3 style={{ margin: 0 }}>Recent Shopify events</h3>
-            <button style={btnGhost} onClick={() => void load()} disabled={busy}>Refresh</button>
-          </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ margin: 0 }}>Recent Shopify events</h3>
+              <button onClick={() => void load()} disabled={busy}>{busy && <ButtonSpinner />}{busy ? "Loading…" : "Refresh"}</button>
+            </div>
           {events.length === 0 ? (
             <p style={{ color: "#6b7280", fontSize: 14 }}>No webhooks received yet — hit Send test in Shopify, then Refresh.</p>
           ) : (
@@ -140,19 +141,24 @@ function InstagramCard() {
   const [to, setTo] = useState("");
   const [text, setText] = useState("");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   async function load() {
+    setLoading(true);
     try {
       const d = await api<{ events: typeof events }>("/api/v1/integrations/instagram/events");
       setEvents(d.events ?? []);
     } catch { setMsg("Load failed — log in again"); }
+    finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
   async function send(e: React.FormEvent) {
-    e.preventDefault(); setMsg("");
+    e.preventDefault(); setMsg(""); setSending(true);
     try {
       await api("/api/v1/integrations/instagram/send", { method: "POST", body: JSON.stringify({ to, text }) });
       setMsg("Sent ✓"); setText("");
     } catch (err) { setMsg(err instanceof Error ? err.message : "Send failed"); }
+    finally { setSending(false); }
   }
   async function copy(id: string) {
     try { await navigator.clipboard.writeText(id); setMsg(`Copied ${id}`); } catch { setTo(id); }
@@ -161,7 +167,7 @@ function InstagramCard() {
     <div>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <h3 style={{ margin: 0 }}>Recent DMs</h3>
-        <button style={btnGhost} onClick={() => void load()}>Refresh</button>
+        <button onClick={() => void load()} disabled={loading}>{loading && <ButtonSpinner />}{loading ? "Loading…" : "Refresh"}</button>
         <span style={{ color: "#9ca3af", fontSize: 12 }}>{events.length} events</span>
       </div>
       {events.length === 0 ? (
@@ -184,7 +190,7 @@ function InstagramCard() {
       <form onSubmit={send} style={{ display: "flex", gap: 8, marginTop: 12 }}>
         <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="Click a sender ID above ↑" title="IG-scoped user ID of the DM sender — click any sender chip above to fill" style={{ ...input, width: 200, fontFamily: "monospace" }} />
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Reply text" style={{ ...input, flex: 1 }} />
-        <button style={btn} type="submit" disabled={!to || !text}>Send</button>
+        <button style={btn} type="submit" disabled={!to || !text || sending}>{sending && <ButtonSpinner />}{sending ? "Sending…" : "Send"}</button>
       </form>
       <p style={{ color: "#9ca3af", fontSize: 12 }}>IG user ID = the number chip on each log row (the DM sender). Click it to fill this box, then Send.</p>
       {msg && <p>{msg}</p>}
