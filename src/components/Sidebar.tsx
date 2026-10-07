@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Plug,
+  ClipboardList,
   FileText,
   SendHorizontal,
   Users,
@@ -22,6 +23,7 @@ const LINKS = [
   { to: "/campaigns", label: "Campaigns", icon: SendHorizontal },
   { to: "/contacts", label: "Contacts", icon: Users },
   { to: "/bots", label: "Chatbot", icon: Bot },
+  { to: "/flows", label: "Flows", icon: ClipboardList },
   { to: "/integrations", label: "Integrations", icon: Plug },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
