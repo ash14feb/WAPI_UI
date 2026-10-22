@@ -124,6 +124,31 @@ export function RegisterPage() {
           )}
         </button>
 
+        <p
+          className="muted"
+          style={{ margin: "0.85rem 0 0", textAlign: "center", fontSize: "0.75rem", lineHeight: 1.6 }}
+        >
+          By creating an account you agree to our{" "}
+          <a
+            href="/terms-of-service"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#00a884", fontWeight: 600 }}
+          >
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#00a884", fontWeight: 600 }}
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
+
         <div
           style={{
             marginTop: "1.25rem",

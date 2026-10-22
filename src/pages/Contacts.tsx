@@ -14,6 +14,7 @@ import {
   X,
   ShieldCheck,
   AlertCircle,
+  Ban,
 } from "lucide-react";
 
 interface Draft {
@@ -23,6 +24,21 @@ interface Draft {
 }
 
 const EMPTY: Draft = { phone: "", name: "", email: "" };
+
+function hasTag(tags: string | null | undefined, tag: string): boolean {
+  return (tags ?? "")
+    .split(",")
+    .some((t) => t.trim().toLowerCase() === tag.toLowerCase());
+}
+
+/** Returns the tag list with `opted_out` removed (or null when nothing remains). */
+function tagsWithoutOptOut(tags: string | null | undefined): string | undefined {
+  const next = (tags ?? "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t && t.toLowerCase() !== "opted_out");
+  return next.join(",");
+}
 
 const AVATAR_COLORS = [
   "#e0f2fe", "#fef3c7", "#dcfce7", "#f3e8ff", "#fee2e2", "#ffedd5"
@@ -154,6 +170,21 @@ export function ContactsPage() {
     }
   }
 
+  async function onResubscribe(c: Contact) {
+    setError(null);
+    setNotice(null);
+    try {
+      await api(`/api/v1/contacts/${c.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ tags: tagsWithoutOptOut(c.tags) ?? "" }),
+      });
+      setNotice(`${c.name || c.profileName || c.phone} can receive WhatsApp messages again.`);
+      await load(search);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Re-subscribe failed");
+    }
+  }
+
   return (
     <div className="page page-wide">
       <header className="page-header">
@@ -252,6 +283,7 @@ export function ContactsPage() {
                   const name = c.name || c.profileName || "Unknown Customer";
                   const initial = name.charAt(0).toUpperCase();
                   const { bg, text } = getAvatarColors(name);
+                  const optedOut = hasTag(c.tags, "opted_out");
 
                   return (
                     <tr key={c.id}>
@@ -299,13 +331,40 @@ export function ContactsPage() {
                         )}
                       </td>
                       <td>
-                        <span className="badge badge-approved" style={{ fontSize: "0.6875rem" }}>
-                          <ShieldCheck size={11} />
-                          <span>Opted In</span>
-                        </span>
+                        {optedOut ? (
+                          <span
+                            className="badge"
+                            title="Replied STOP — all outbound WhatsApp sends to this contact are suppressed"
+                            style={{
+                              fontSize: "0.6875rem",
+                              background: "#fef2f2",
+                              color: "#b91c1c",
+                              border: "1px solid #fecaca",
+                            }}
+                          >
+                            <Ban size={11} />
+                            <span>Opted Out</span>
+                          </span>
+                        ) : (
+                          <span className="badge badge-approved" style={{ fontSize: "0.6875rem" }}>
+                            <ShieldCheck size={11} />
+                            <span>Opted In</span>
+                          </span>
+                        )}
                       </td>
                       <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                          {optedOut && (
+                            <button
+                              className="secondary-btn"
+                              style={{ padding: "0.35rem 0.6rem", fontSize: "0.75rem" }}
+                              onClick={() => void onResubscribe(c)}
+                              title="Remove the opt-out and allow messaging again"
+                            >
+                              <ShieldCheck size={13} />
+                              <span>Re-subscribe</span>
+                            </button>
+                          )}
                           <button
                             className="secondary-btn"
                             style={{ padding: "0.35rem 0.6rem", fontSize: "0.75rem" }}

@@ -22,6 +22,7 @@ import {
   X,
   Phone,
   ShieldCheck,
+  Ban,
 } from "lucide-react";
 
 interface Ctx {
@@ -263,7 +264,10 @@ export function ConversationView() {
     "…";
 
   const initial = name.charAt(0).toUpperCase();
-  const canSend = !sending && !uploading && (!!text.trim() || !!attachment);
+  const optedOut = (conversation?.contact.tags ?? "")
+    .split(",")
+    .some((t) => t.trim().toLowerCase() === "opted_out");
+  const canSend = !sending && !uploading && !optedOut && (!!text.trim() || !!attachment);
 
   return (
     <div className="conv-detail">
@@ -283,6 +287,28 @@ export function ConversationView() {
               <span title="Verified WhatsApp Contact" style={{ display: "inline-flex" }}>
                 <ShieldCheck size={14} color="#00a884" />
               </span>
+              {optedOut && (
+                <span
+                  title="This contact replied STOP and cannot be messaged until re-subscribed"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.25rem",
+                    background: "#fef2f2",
+                    color: "#b91c1c",
+                    border: "1px solid #fecaca",
+                    borderRadius: "999px",
+                    padding: "0.1rem 0.5rem",
+                    fontSize: "0.6875rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  <Ban size={11} />
+                  <span>Opted out</span>
+                </span>
+              )}
             </div>
             <div className="muted tiny" style={{ fontFamily: "var(--font-mono)", color: "#64748b" }}>
               {conversation?.contact.phone}
@@ -308,6 +334,24 @@ export function ConversationView() {
       </header>
 
       {error && <div className="error" style={{ margin: "0.5rem 1rem" }}>{error}</div>}
+
+      {optedOut && !error && (
+        <div
+          style={{
+            margin: "0.5rem 1rem",
+            padding: "0.6rem 0.85rem",
+            background: "#fff7ed",
+            border: "1px solid #fed7aa",
+            borderRadius: "8px",
+            color: "#9a3412",
+            fontSize: "0.8125rem",
+          }}
+        >
+          This contact opted out by replying STOP. Sending is disabled until they message you again, or you remove the
+          <code style={{ background: "#ffedd5", padding: "0 0.25rem", borderRadius: "4px" }}> opted_out </code>
+          tag from Contacts.
+        </div>
+      )}
 
       <div className="msg-list">
         <div style={{ textAlign: "center", margin: "0.75rem 0", userSelect: "none" }}>
