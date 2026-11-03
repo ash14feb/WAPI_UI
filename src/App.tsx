@@ -12,6 +12,7 @@ import { ContactsPage } from "./pages/Contacts";
 import { BotsPage } from "./pages/Bots";
 import { IntegrationsPage } from "./pages/Integrations";
 import { FlowsPage } from "./pages/Flows";
+import { AiAgentPage } from "./pages/AiAgent";
 import { InboxPage } from "./inbox/InboxPage";
 import { ConversationView } from "./inbox/ConversationView";
 
@@ -38,6 +39,7 @@ export function App() {
         <Route path="/campaigns/:campaignId" element={<CampaignDetailPage />} />
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/bots" element={<BotsPage />} />
+        <Route path="/ai" element={<AiAgentPage />} />
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/flows" element={<FlowsPage />} />
       </Route>

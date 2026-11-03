@@ -23,10 +23,22 @@ import {
   Phone,
   ShieldCheck,
   Ban,
+  Sparkles,
 } from "lucide-react";
 
 interface Ctx {
   onChanged: () => void;
+}
+
+interface AiConversationState {
+  conversationId: string;
+  aiEnabled: boolean | null;
+  summary: string | null;
+  facts: Record<string, unknown>;
+  handoffAt: string | null;
+  lastAiReplyAt: string | null;
+  consecutiveErrors: number;
+  lastError: string | null;
 }
 
 function statusLabel(m: Message): string {
@@ -132,6 +144,7 @@ export function ConversationView() {
   const { onChanged } = useOutletContext<Ctx>();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [aiState, setAiState] = useState<AiConversationState | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -150,6 +163,9 @@ export function ConversationView() {
       setMessages(asArray(msgs));
       markSeen(conversationId);
       setError(null);
+      api<AiConversationState>(`/api/v1/ai/conversations/${conversationId}/state`)
+        .then(setAiState)
+        .catch(() => setAiState(null));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load conversation");
     }
@@ -158,6 +174,7 @@ export function ConversationView() {
   useEffect(() => {
     setConversation(null);
     setMessages([]);
+    setAiState(null);
     setAttachment(null);
     void load();
   }, [load]);
@@ -238,6 +255,20 @@ export function ConversationView() {
       setError(err instanceof ApiError ? err.message : "Failed to send message");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function toggleAi() {
+    if (!conversationId) return;
+    const next = aiState?.aiEnabled === false;
+    try {
+      const state = await api<AiConversationState>(`/api/v1/ai/conversations/${conversationId}/state`, {
+        method: "PUT",
+        body: JSON.stringify({ aiEnabled: next }),
+      });
+      setAiState(state);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update AI agent");
     }
   }
 
@@ -324,6 +355,19 @@ export function ConversationView() {
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <button
             className="ghost-btn"
+            onClick={() => void toggleAi()}
+            title={
+              aiState?.aiEnabled === false
+                ? "AI agent is paused for this conversation — click to re-enable"
+                : "AI agent can reply in this conversation — click to pause"
+            }
+            style={{ opacity: aiState?.aiEnabled === false ? 0.6 : 1 }}
+          >
+            <Sparkles size={15} color={aiState?.aiEnabled === false ? "#94a3b8" : "#00a884"} />
+            <span>{aiState?.aiEnabled === false ? "AI paused" : "AI on"}</span>
+          </button>
+          <button
+            className="ghost-btn"
             onClick={() => void load()}
             title="Refresh messages"
           >
@@ -375,6 +419,14 @@ export function ConversationView() {
         {messages.map((m) => (
           <div key={m.id} className={`bubble ${m.direction === "OUTBOUND" ? "out" : "in"}`}>
             <MessageBody m={m} />
+            {m.direction === "OUTBOUND" && m.messageType === "AI" && (
+              <div
+                className="tiny"
+                style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "#0284c7", fontWeight: 700, marginTop: "0.25rem" }}
+              >
+                <Sparkles size={11} /> AI Agent
+              </div>
+            )}
             <div
               className="bubble-meta"
               title={m.messageTimestamp ? new Date(m.messageTimestamp).toLocaleString() : statusLabel(m)}
