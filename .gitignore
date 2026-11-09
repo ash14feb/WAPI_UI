@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+/.vs/UI/CopilotIndices/17.14.1431.25910
+/.vs/UI/v17
+/.vs/UI/config
+/.vs/UI-WAPI/CopilotIndices/17.14.1431.25910

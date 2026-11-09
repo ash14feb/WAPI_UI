@@ -1139,6 +1139,10 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--danger);
 }
 
+.ticks.sending .sending-clock {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
 .composer {
   display: flex;
   align-items: center;

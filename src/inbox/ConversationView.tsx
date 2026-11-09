@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useOutletContext, useParams } from "react-router-dom";
 import { api, ApiError, asArray, uploadFile } from "../api/client";
@@ -77,8 +77,8 @@ function Ticks({ status }: { status: string }) {
     );
   }
   return (
-    <span className="ticks" title="Sending…">
-      <Clock size={13} color="#8696a0" />
+    <span className="ticks sending" title={status === "SENDING" ? "Sending…" : "Queued"}>
+      <Clock size={13} color="#8696a0" className="sending-clock" />
     </span>
   );
 }
@@ -132,6 +132,29 @@ function MessageBody({ m }: { m: Message }) {
   return <div className="bubble-text">{m.textContent ?? ""}</div>;
 }
 
+const Bubble = memo(function Bubble({ m }: { m: Message }) {
+  return (
+    <div className={`bubble ${m.direction === "OUTBOUND" ? "out" : "in"}`}>
+      <MessageBody m={m} />
+      {m.direction === "OUTBOUND" && m.messageType === "AI" && (
+        <div
+          className="tiny"
+          style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "#0284c7", fontWeight: 700, marginTop: "0.25rem" }}
+        >
+          <Sparkles size={11} /> AI Agent
+        </div>
+      )}
+      <div
+        className="bubble-meta"
+        title={m.messageTimestamp ? new Date(m.messageTimestamp).toLocaleString() : statusLabel(m)}
+      >
+        <span>{timeAgo(m.messageTimestamp)}</span>
+        {m.direction === "OUTBOUND" && <Ticks status={m.status} />}
+      </div>
+    </div>
+  );
+});
+
 interface Attachment {
   kind: "image" | "video" | "document";
   mediaId: string;
@@ -179,26 +202,45 @@ export function ConversationView() {
     void load();
   }, [load]);
 
+  // Server ids (or temp ids) of optimistic rows awaiting their SSE echo.
+  const pendingTempIdsRef = useRef(new Set<string>());
+
+  const mergeIncoming = useCallback((incoming: Message) => {
+    setMessages((prev) => {
+      const byId = prev.findIndex((m) => m.id === incoming.id);
+      if (byId !== -1) {
+        const copy = [...prev];
+        copy[byId] = incoming;
+        return copy;
+      }
+      // Our optimistic row, echoed back over SSE before the POST resolved:
+      // adopt the server identity instead of rendering the message twice.
+      const pendingIndex = prev.findIndex(
+        (m) => m.status === "SENDING" && pendingTempIdsRef.current.has(m.id),
+      );
+      if (pendingIndex !== -1) {
+        pendingTempIdsRef.current.delete(prev[pendingIndex].id);
+        const copy = [...prev];
+        copy[pendingIndex] = incoming;
+        return copy;
+      }
+      return [...prev, incoming];
+    });
+  }, []);
+
   const onRealtime = useCallback(
     (e: RealtimeEvent) => {
       if (e.type !== "message.created" && e.type !== "message.updated") return;
       if (e.conversationId !== conversationId) return;
+      mergeIncoming(e.message);
       if (e.type === "message.created") {
-        setMessages((prev) => (prev.some((m) => m.id === e.message.id) ? prev : [...prev, e.message]));
         markSeen(e.conversationId);
-      } else {
-        setMessages((prev) => prev.map((m) => (m.id === e.message.id ? e.message : m)));
+        onChanged();
       }
-      onChanged();
     },
-    [conversationId, onChanged],
+    [conversationId, mergeIncoming, onChanged],
   );
   useRealtime(onRealtime);
-
-  useEffect(() => {
-    const t = setInterval(() => void load(), 60000);
-    return () => clearInterval(t);
-  }, [load]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -231,28 +273,69 @@ export function ConversationView() {
   async function onSend(e: FormEvent) {
     e.preventDefault();
     if ((!text.trim() && !attachment) || !conversationId || sending || uploading) return;
+
+    const outgoingText = text.trim();
+    const outgoingAttachment = attachment;
+    const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimistic: Message = {
+      id: tempId,
+      conversationId,
+      whatsappMessageId: null,
+      direction: "OUTBOUND",
+      messageType: outgoingAttachment ? outgoingAttachment.kind.toUpperCase() : "TEXT",
+      textContent: outgoingText || null,
+      status: "SENDING",
+      messageTimestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Paint immediately: the composer never waits on the network.
+    pendingTempIdsRef.current.add(tempId);
+    setMessages((prev) => [...prev, optimistic]);
+    setText("");
+    setAttachment(null);
     setSending(true);
     setError(null);
+
     try {
-      await api(`/api/v1/conversations/${conversationId}/messages`, {
-        method: "POST",
-        body: JSON.stringify(
-          attachment
-            ? {
-                mediaKind: attachment.kind,
-                mediaId: attachment.mediaId,
-                caption: text.trim() || undefined,
-                filename: attachment.kind === "document" ? attachment.fileName : undefined,
-              }
-            : { text: text.trim() },
-        ),
-      });
-      setText("");
-      setAttachment(null);
-      await load();
+      const saved = await api<{ message?: Message; messageId: string }>(
+        `/api/v1/conversations/${conversationId}/messages`,
+        {
+          method: "POST",
+          body: JSON.stringify(
+            outgoingAttachment
+              ? {
+                  mediaKind: outgoingAttachment.kind,
+                  mediaId: outgoingAttachment.mediaId,
+                  caption: outgoingText || undefined,
+                  filename: outgoingAttachment.kind === "document" ? outgoingAttachment.fileName : undefined,
+                }
+              : { text: outgoingText },
+          ),
+        },
+      );
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== tempId) return m;
+          pendingTempIdsRef.current.delete(tempId);
+          if (saved?.message) {
+            pendingTempIdsRef.current.delete(saved.message.id);
+            return saved.message;
+          }
+          // Response without the row body: keep waiting for the SSE update.
+          const serverId = saved?.messageId ?? m.id;
+          pendingTempIdsRef.current.add(serverId);
+          return { ...m, id: serverId };
+        }),
+      );
       onChanged();
     } catch (err) {
+      pendingTempIdsRef.current.delete(tempId);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "FAILED" } : m)));
       setError(err instanceof ApiError ? err.message : "Failed to send message");
+      // Nothing was lost: restore the draft so the user can retry.
+      setText((current) => (current ? current : outgoingText));
+      if (outgoingAttachment) setAttachment(outgoingAttachment);
     } finally {
       setSending(false);
     }
@@ -417,26 +500,7 @@ export function ConversationView() {
         </div>
 
         {messages.map((m) => (
-          <div key={m.id} className={`bubble ${m.direction === "OUTBOUND" ? "out" : "in"}`}>
-            <MessageBody m={m} />
-            {m.direction === "OUTBOUND" && m.messageType === "AI" && (
-              <div
-                className="tiny"
-                style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "#0284c7", fontWeight: 700, marginTop: "0.25rem" }}
-              >
-                <Sparkles size={11} /> AI Agent
-              </div>
-            )}
-            <div
-              className="bubble-meta"
-              title={m.messageTimestamp ? new Date(m.messageTimestamp).toLocaleString() : statusLabel(m)}
-            >
-              <span>{timeAgo(m.messageTimestamp)}</span>
-              {m.direction === "OUTBOUND" && (
-                <Ticks status={m.status} />
-              )}
-            </div>
-          </div>
+          <Bubble key={m.id} m={m} />
         ))}
         <div ref={bottomRef} />
       </div>
@@ -472,7 +536,7 @@ export function ConversationView() {
             type="file"
             hidden
             accept="image/jpeg,image/png,image/webp,video/mp4,application/pdf"
-            disabled={sending || uploading}
+            disabled={uploading}
             onChange={(e) => {
               void onAttach(e.target.files?.[0]);
               e.target.value = "";
@@ -488,11 +552,7 @@ export function ConversationView() {
         />
 
         <button type="submit" disabled={!canSend} title="Send WhatsApp Message">
-          {sending ? (
-            <RefreshCw size={16} className="animate-spin" />
-          ) : (
-            <Send size={16} />
-          )}
+          <Send size={16} />
         </button>
       </form>
     </div>

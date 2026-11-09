@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router-dom";
 import { api, ApiError, asArray } from "../api/client";
 import type { Conversation } from "../api/types";
 import { useRealtime } from "../realtime/useRealtime";
+import type { RealtimeEvent } from "../realtime/useRealtime";
 import { LoadingSpinner } from "../components/Loader";
 import {
   Search,
@@ -77,8 +78,11 @@ export function InboxPage() {
   const [filterUnread, setFilterUnread] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const activeIdRef = useRef(conversationId);
+  activeIdRef.current = conversationId;
 
   useEffect(() => {
+    setLoading(true);
     const t = setTimeout(() => setDebounced(search.trim()), 300);
     return () => clearTimeout(t);
   }, [search]);
@@ -98,15 +102,59 @@ export function InboxPage() {
   }, [debounced]);
 
   useEffect(() => {
-    setLoading(true);
+    // Initial load and search changes only; realtime keeps the list fresh after that.
     void load();
   }, [load]);
 
-  const onRealtime = useCallback((_e: unknown) => void load(), [load]);
+  const onRealtime = useCallback(
+    (e: RealtimeEvent) => {
+      if (e.type === "message.created" || e.type === "message.updated") {
+        const { conversationId, message } = e;
+        setConversations((prev) => {
+          const index = prev.findIndex((c) => c.id === conversationId);
+          if (index === -1) {
+            // A conversation we don't know about yet (new contact): fetch the list.
+            void load();
+            return prev;
+          }
+          const current = prev[index];
+          const isNewer = !current.lastMessage ||
+            new Date(message.createdAt).getTime() >= new Date(current.lastMessage.createdAt).getTime();
+          const next: Conversation = {
+            ...current,
+            lastMessageAt: isNewer ? message.createdAt : current.lastMessageAt,
+            lastMessage: isNewer ? message : current.lastMessage,
+            unreadCount:
+              message.direction === "INBOUND" && isNewer
+                ? current.unreadCount + (e.type === "message.created" ? 1 : 0)
+                : current.unreadCount,
+          };
+          // An edited last message (status tick) doesn't change ordering, so
+          // updating in place avoids re-sorting and re-rendering the list.
+          if (e.type === "message.updated" || index === 0) {
+            const copy = [...prev];
+            copy[index] = next;
+            return copy;
+          }
+          const copy = prev.filter((_, i) => i !== index);
+          return [next, ...copy];
+        });
+        if (e.type === "message.created" && conversationId === activeIdRef.current) {
+          markSeen(conversationId);
+        }
+        return;
+      }
+      if (e.type === "conversation.updated") {
+        void load();
+      }
+    },
+    [load],
+  );
   useRealtime(onRealtime);
 
   useEffect(() => {
-    const t = setInterval(() => void load(), 60000);
+    // Safety net only: realtime handles the common path.
+    const t = setInterval(() => void load(), 120000);
     return () => clearInterval(t);
   }, [load]);
 
