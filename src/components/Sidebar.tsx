@@ -72,7 +72,7 @@ export function Sidebar({ mobileOpen = false, onClose, collapsed = false, onTogg
         <div className="brand-logo-container">
           <img
             src={logoUrl}
-            alt="ImmerzoWAPI"
+            alt="UnifyLead"
             className="brand-logo"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -82,7 +82,7 @@ export function Sidebar({ mobileOpen = false, onClose, collapsed = false, onTogg
         </div>
         <div className="brand-text">
           <span className="brand-name">
-            ImmerzoWAPI
+            UnifyLead
             <ShieldCheck size={16} color="#00a884" />
           </span>
           <span className="brand-tagline">Enterprise WhatsApp SaaS</span>

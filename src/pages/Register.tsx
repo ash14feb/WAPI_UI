@@ -34,8 +34,8 @@ export function RegisterPage() {
     <div className="auth-wrap">
       <form className="auth-card" onSubmit={onSubmit}>
         <div className="auth-brand">
-          <img src={logoUrl} alt="ImmerzoWAPI logo" className="auth-logo" />
-          <strong style={{ fontSize: "1.25rem", color: "#0f172a" }}>ImmerzoWAPI</strong>
+          <img src={logoUrl} alt="UnifyLead logo" className="auth-logo" />
+          <strong style={{ fontSize: "1.25rem", color: "#0f172a" }}>UnifyLead</strong>
           <span className="muted small" style={{ fontWeight: 500 }}>
             Enterprise WhatsApp Cloud API Platform
           </span>

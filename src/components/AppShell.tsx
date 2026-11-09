@@ -138,7 +138,7 @@ export function AppShell() {
               <PanelLeft size={18} />
             </button>
             <div className="top-breadcrumb">
-              <span>ImmerzoWAPI</span>
+              <span>UnifyLead</span>
               <span>/</span>
               <span className="top-breadcrumb-current">{currentTitle}</span>
             </div>

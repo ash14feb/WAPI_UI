@@ -362,7 +362,7 @@ export function ConversationView() {
           <Phone size={32} />
         </div>
         <div style={{ textAlign: "center" }}>
-          <h3 style={{ fontSize: "1.25rem", color: "#0f172a", marginBottom: "0.25rem" }}>ImmerzoWAPI Shared Inbox</h3>
+          <h3 style={{ fontSize: "1.25rem", color: "#0f172a", marginBottom: "0.25rem" }}>UnifyLead Shared Inbox</h3>
           <p className="muted small" style={{ maxWidth: "340px", margin: "0 auto" }}>
             Select a customer conversation from the list to reply directly through WhatsApp Business Cloud API.
           </p>

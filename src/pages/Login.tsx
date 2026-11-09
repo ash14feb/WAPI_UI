@@ -32,8 +32,8 @@ export function LoginPage() {
     <div className="auth-wrap">
       <form className="auth-card" onSubmit={onSubmit}>
         <div className="auth-brand">
-          <img src={logoUrl} alt="ImmerzoWAPI logo" className="auth-logo" />
-          <strong style={{ fontSize: "1.25rem", color: "#0f172a" }}>ImmerzoWAPI</strong>
+          <img src={logoUrl} alt="UnifyLead logo" className="auth-logo" />
+          <strong style={{ fontSize: "1.25rem", color: "#0f172a" }}>UnifyLead</strong>
           <span className="muted small" style={{ fontWeight: 500 }}>
             Enterprise WhatsApp Cloud API Platform
           </span>
@@ -126,7 +126,7 @@ export function LoginPage() {
             fontSize: "0.8125rem",
           }}
         >
-          <span className="muted">New to ImmerzoWAPI? </span>
+          <span className="muted">New to UnifyLead? </span>
           <Link to="/register" style={{ color: "#00a884", fontWeight: 600, textDecoration: "none" }}>
             Create an account
           </Link>
