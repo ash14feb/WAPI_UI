@@ -55,10 +55,10 @@ export function timeAgo(iso: string | null): string {
 }
 
 const AVATAR_COLORS = [
-  "#e0f2fe", "#fef3c7", "#dcfce7", "#f3e8ff", "#fee2e2", "#ffedd5"
+  "#e0f2fe", "#fef3c7", "#dcfce7", "var(--accent-light)", "var(--danger-bg)", "#FDF1E6"
 ];
 const AVATAR_TEXT = [
-  "#0369a1", "#b45309", "#15803d", "#7e22ce", "#b91c1c", "#c2410c"
+  "var(--info)", "var(--warning)", "var(--success)", "var(--success)", "var(--danger)", "#A8541F"
 ];
 
 function getAvatarColors(name: string) {
@@ -167,13 +167,13 @@ export function InboxPage() {
       <aside className={`conv-panel ${conversationId ? "sidebar-hidden-mobile" : ""}`}>
         <div className="conv-panel-header">
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <MessageSquare size={20} color="#00a884" />
+            <MessageSquare size={20} color="var(--brand-teal)" />
             <strong>Chats</strong>
             <span
               style={{
                 fontSize: "0.75rem",
-                background: "#e2e8f0",
-                color: "#475569",
+                background: "var(--border)",
+                color: "var(--text-muted)",
                 fontWeight: 700,
                 padding: "0.15rem 0.45rem",
                 borderRadius: "9999px",
@@ -186,9 +186,9 @@ export function InboxPage() {
           <button
             onClick={() => setFilterUnread((v) => !v)}
             style={{
-              background: filterUnread ? "#e6f7f3" : "transparent",
-              color: filterUnread ? "#00a884" : "#64748b",
-              border: filterUnread ? "1px solid #00a884" : "1px solid #e2e8f0",
+              background: filterUnread ? "var(--accent-light)" : "transparent",
+              color: filterUnread ? "var(--brand-teal)" : "var(--text-muted)",
+              border: filterUnread ? "1px solid var(--brand-teal)" : "1px solid var(--border)",
               borderRadius: "8px",
               padding: "0.3rem 0.6rem",
               fontSize: "0.75rem",
@@ -221,13 +221,13 @@ export function InboxPage() {
 
         {loading ? (
           <div className="center muted" style={{ padding: "2.5rem 1rem", flexDirection: "column", gap: "0.6rem" }}>
-            <LoadingSpinner size={22} color="#00a884" />
-            <span style={{ fontSize: "0.8125rem", color: "#64748b", fontWeight: 500 }}>Loading conversations…</span>
+            <LoadingSpinner size={22} color="var(--brand-teal)" />
+            <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)", fontWeight: 500 }}>Loading conversations…</span>
           </div>
         ) : displayedList.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.5rem", padding: "3rem 1.5rem", textAlign: "center" }}>
-            <MessageSquare size={32} color="#cbd5e1" />
-            <span style={{ fontWeight: 600, color: "#475569" }}>No conversations found</span>
+            <MessageSquare size={32} color="#CDDAD7" />
+            <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No conversations found</span>
             <span className="tiny">Messages from your WhatsApp Cloud API webhook will appear here automatically.</span>
           </div>
         ) : (
@@ -258,7 +258,7 @@ export function InboxPage() {
                         <span className="conv-time">{timeAgo(c.lastMessageAt)}</span>
                       </div>
                       {c.whatsappAccount && (
-                        <div className="tiny" style={{ color: "#00a884", fontWeight: 700, marginTop: "0.1rem" }} title={`Via ${c.whatsappAccount.businessName ?? ""} ${c.whatsappAccount.displayPhoneNumber ?? ""}`}>
+                        <div className="tiny" style={{ color: "var(--brand-teal)", fontWeight: 700, marginTop: "0.1rem" }} title={`Via ${c.whatsappAccount.businessName ?? ""} ${c.whatsappAccount.displayPhoneNumber ?? ""}`}>
                           via {c.whatsappAccount.businessName || c.whatsappAccount.displayPhoneNumber || "number"}
                         </div>
                       )}
@@ -267,11 +267,11 @@ export function InboxPage() {
                         <span className="conv-preview ellipsis" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
                           {c.lastMessage?.direction === "OUTBOUND" && (
                             c.lastMessage.status === "READ" ? (
-                              <CheckCheck size={14} color="#53bdeb" style={{ flexShrink: 0 }} />
+                              <CheckCheck size={14} color="#1C9FD6" style={{ flexShrink: 0 }} />
                             ) : c.lastMessage.status === "DELIVERED" ? (
-                              <CheckCheck size={14} color="#8696a0" style={{ flexShrink: 0 }} />
+                              <CheckCheck size={14} color="var(--sidebar-text)" style={{ flexShrink: 0 }} />
                             ) : (
-                              <Check size={14} color="#8696a0" style={{ flexShrink: 0 }} />
+                              <Check size={14} color="var(--sidebar-text)" style={{ flexShrink: 0 }} />
                             )
                           )}
                           <span className="ellipsis">{preview(c)}</span>

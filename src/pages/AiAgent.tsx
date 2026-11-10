@@ -201,9 +201,9 @@ function toIsoOrNull(value: string): string | null {
 }
 
 function statusStyle(status: string): { background: string; color: string } {
-  if (status === "SUCCESS") return { background: "#ecfdf5", color: "#047857" };
-  if (status === "POLICY_VIOLATION") return { background: "#fff7ed", color: "#c2410c" };
-  return { background: "#fef2f2", color: "#b91c1c" };
+  if (status === "SUCCESS") return { background: "var(--success-bg)", color: "var(--success)" };
+  if (status === "POLICY_VIOLATION") return { background: "#FDF7EF", color: "#A8541F" };
+  return { background: "var(--danger-bg)", color: "var(--danger)" };
 }
 
 const TABS = [
@@ -366,7 +366,7 @@ export function AiAgentPage() {
         </div>
         <span
           className="badge"
-          style={draft.enabled ? { background: "#ecfdf5", color: "#047857" } : { background: "#f1f5f9", color: "#475569" }}
+          style={draft.enabled ? { background: "var(--success-bg)", color: "var(--success)" } : { background: "var(--bg-subtle)", color: "var(--text-muted)" }}
         >
           {draft.enabled ? "AI enabled" : "AI disabled"}
         </span>
@@ -374,7 +374,7 @@ export function AiAgentPage() {
 
       {error && <div className="error">{error}</div>}
       {notice && (
-        <div style={{ background: "#e6f7f3", color: "#047857", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem", fontWeight: 600 }}>
+        <div style={{ background: "var(--accent-light)", color: "var(--success)", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem", fontWeight: 600 }}>
           {notice}
         </div>
       )}
@@ -861,7 +861,7 @@ export function AiAgentPage() {
                     </td>
                     <td style={{ padding: "0.65rem 1rem", maxWidth: "22rem" }} className="ellipsis">
                       {log.errorMessage ? (
-                        <span style={{ color: "#b91c1c" }}>
+                        <span style={{ color: "var(--danger)" }}>
                           {log.errorCode ? `${log.errorCode}: ` : ""}{log.errorMessage}
                         </span>
                       ) : (

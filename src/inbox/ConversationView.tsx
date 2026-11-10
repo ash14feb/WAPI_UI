@@ -51,34 +51,34 @@ function Ticks({ status }: { status: string }) {
   if (status === "READ") {
     return (
       <span className="ticks read" title="Read by recipient">
-        <CheckCheck size={14} color="#53bdeb" />
+        <CheckCheck size={14} color="#1C9FD6" />
       </span>
     );
   }
   if (status === "DELIVERED") {
     return (
       <span className="ticks" title="Delivered to recipient">
-        <CheckCheck size={14} color="#8696a0" />
+        <CheckCheck size={14} color="var(--sidebar-text)" />
       </span>
     );
   }
   if (status === "SENT") {
     return (
       <span className="ticks" title="Sent via Meta Cloud API">
-        <Check size={14} color="#8696a0" />
+        <Check size={14} color="var(--sidebar-text)" />
       </span>
     );
   }
   if (status === "FAILED") {
     return (
       <span className="ticks failed" title="Message delivery failed">
-        <AlertCircle size={14} color="#dc2626" />
+        <AlertCircle size={14} color="var(--danger)" />
       </span>
     );
   }
   return (
     <span className="ticks sending" title={status === "SENDING" ? "Sending…" : "Queued"}>
-      <Clock size={13} color="#8696a0" className="sending-clock" />
+      <Clock size={13} color="var(--sidebar-text)" className="sending-clock" />
     </span>
   );
 }
@@ -87,7 +87,7 @@ function MessageBody({ m }: { m: Message }) {
   if (m.messageType === "IMAGE") {
     return (
       <div className="bubble-text">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#0284c7", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--info)", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
           <ImageIcon size={14} />
           <span>Image</span>
         </div>
@@ -98,7 +98,7 @@ function MessageBody({ m }: { m: Message }) {
   if (m.messageType === "VIDEO") {
     return (
       <div className="bubble-text">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#7c3aed", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--brand-teal-hover)", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
           <Video size={14} />
           <span>Video</span>
         </div>
@@ -109,7 +109,7 @@ function MessageBody({ m }: { m: Message }) {
   if (m.messageType === "DOCUMENT") {
     return (
       <div className="bubble-text">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#b45309", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--warning)", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
           <FileText size={14} />
           <span>Document</span>
         </div>
@@ -120,7 +120,7 @@ function MessageBody({ m }: { m: Message }) {
   if (m.messageType === "AUDIO") {
     return (
       <div className="bubble-text">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#059669", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--success)", fontWeight: 600, fontSize: "0.8125rem", marginBottom: "0.25rem" }}>
           <Music size={14} />
           <span>Voice Message</span>
         </div>
@@ -139,7 +139,7 @@ const Bubble = memo(function Bubble({ m }: { m: Message }) {
       {m.direction === "OUTBOUND" && m.messageType === "AI" && (
         <div
           className="tiny"
-          style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "#0284c7", fontWeight: 700, marginTop: "0.25rem" }}
+          style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--info)", fontWeight: 700, marginTop: "0.25rem" }}
         >
           <Sparkles size={11} /> AI Agent
         </div>
@@ -357,12 +357,12 @@ export function ConversationView() {
 
   if (!conversationId) {
     return (
-      <div className="center muted" style={{ height: "100%", flexDirection: "column", gap: "1rem", background: "#f8fafc" }}>
-        <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: "#e6f7f3", display: "flex", alignItems: "center", justifyContent: "center", color: "#00a884" }}>
+      <div className="center muted" style={{ height: "100%", flexDirection: "column", gap: "1rem", background: "var(--bg)" }}>
+        <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: "var(--accent-light)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--brand-teal)" }}>
           <Phone size={32} />
         </div>
         <div style={{ textAlign: "center" }}>
-          <h3 style={{ fontSize: "1.25rem", color: "#0f172a", marginBottom: "0.25rem" }}>UnifyLead Shared Inbox</h3>
+          <h3 style={{ fontSize: "1.25rem", color: "var(--text)", marginBottom: "0.25rem" }}>UnifyLead Shared Inbox</h3>
           <p className="muted small" style={{ maxWidth: "340px", margin: "0 auto" }}>
             Select a customer conversation from the list to reply directly through WhatsApp Business Cloud API.
           </p>
@@ -387,7 +387,7 @@ export function ConversationView() {
     <div className="conv-detail">
       <header className="detail-header">
         <div className="detail-header-contact">
-          <Link to="/inbox" className="back-link" style={{ marginRight: "0.25rem", color: "#64748b" }}>
+          <Link to="/inbox" className="back-link" style={{ marginRight: "0.25rem", color: "var(--text-muted)" }}>
             <ArrowLeft size={20} />
           </Link>
 
@@ -397,9 +397,9 @@ export function ConversationView() {
 
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <strong style={{ fontSize: "1rem", color: "#0f172a" }}>{name}</strong>
+              <strong style={{ fontSize: "1rem", color: "var(--text)" }}>{name}</strong>
               <span title="Verified WhatsApp Contact" style={{ display: "inline-flex" }}>
-                <ShieldCheck size={14} color="#00a884" />
+                <ShieldCheck size={14} color="var(--brand-teal)" />
               </span>
               {optedOut && (
                 <span
@@ -408,9 +408,9 @@ export function ConversationView() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "0.25rem",
-                    background: "#fef2f2",
-                    color: "#b91c1c",
-                    border: "1px solid #fecaca",
+                    background: "var(--danger-bg)",
+                    color: "var(--danger)",
+                    border: "1px solid var(--danger-border)",
                     borderRadius: "999px",
                     padding: "0.1rem 0.5rem",
                     fontSize: "0.6875rem",
@@ -424,11 +424,11 @@ export function ConversationView() {
                 </span>
               )}
             </div>
-            <div className="muted tiny" style={{ fontFamily: "var(--font-mono)", color: "#64748b" }}>
+            <div className="muted tiny" style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
               {conversation?.contact.phone}
             </div>
             {conversation?.whatsappAccount && (
-              <div className="tiny" style={{ color: "#00a884", fontWeight: 700, marginTop: "0.15rem" }}>
+              <div className="tiny" style={{ color: "var(--brand-teal)", fontWeight: 700, marginTop: "0.15rem" }}>
                 Replies send from {conversation.whatsappAccount.businessName || conversation.whatsappAccount.displayPhoneNumber || "this number"}
               </div>
             )}
@@ -446,7 +446,7 @@ export function ConversationView() {
             }
             style={{ opacity: aiState?.aiEnabled === false ? 0.6 : 1 }}
           >
-            <Sparkles size={15} color={aiState?.aiEnabled === false ? "#94a3b8" : "#00a884"} />
+            <Sparkles size={15} color={aiState?.aiEnabled === false ? "var(--text-subtle)" : "var(--brand-teal)"} />
             <span>{aiState?.aiEnabled === false ? "AI paused" : "AI on"}</span>
           </button>
           <button
@@ -467,15 +467,15 @@ export function ConversationView() {
           style={{
             margin: "0.5rem 1rem",
             padding: "0.6rem 0.85rem",
-            background: "#fff7ed",
-            border: "1px solid #fed7aa",
+            background: "#FDF7EF",
+            border: "1px solid #F6DCC0",
             borderRadius: "8px",
-            color: "#9a3412",
+            color: "#8A4A24",
             fontSize: "0.8125rem",
           }}
         >
           This contact opted out by replying STOP. Sending is disabled until they message you again, or you remove the
-          <code style={{ background: "#ffedd5", padding: "0 0.25rem", borderRadius: "4px" }}> opted_out </code>
+          <code style={{ background: "#FDF1E6", padding: "0 0.25rem", borderRadius: "4px" }}> opted_out </code>
           tag from Contacts.
         </div>
       )}
@@ -484,8 +484,8 @@ export function ConversationView() {
         <div style={{ textAlign: "center", margin: "0.75rem 0", userSelect: "none" }}>
           <span
             style={{
-              background: "#ffffff",
-              color: "#64748b",
+              background: "var(--panel)",
+              color: "var(--text-muted)",
               fontSize: "0.6875rem",
               fontWeight: 600,
               padding: "0.3rem 0.75rem",
@@ -510,8 +510,8 @@ export function ConversationView() {
           {attachment.previewUrl ? (
             <img src={attachment.previewUrl} alt="Attachment" className="attach-thumb" />
           ) : (
-            <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <FileText size={20} color="#00a884" />
+            <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "var(--bg-subtle)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <FileText size={20} color="var(--brand-teal)" />
             </div>
           )}
           <div style={{ flex: 1, minWidth: 0 }}>

@@ -6,7 +6,7 @@ interface SpinnerProps {
   className?: string;
 }
 
-export function LoadingSpinner({ size = 20, color = "#00a884", className = "" }: SpinnerProps) {
+export function LoadingSpinner({ size = 20, color = "var(--brand-teal)", className = "" }: SpinnerProps) {
   return (
     <Loader2
       size={size}
@@ -69,19 +69,19 @@ export function PageLoader({
             position: "absolute",
             inset: 0,
             borderRadius: "50%",
-            background: "#e6f7f3",
+            background: "var(--accent-light)",
             animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
           }}
         />
         <Loader2
           size={30}
-          color="#00a884"
+          color="var(--brand-teal)"
           className="animate-spin"
           style={{ position: "relative", zIndex: 2 }}
         />
       </div>
 
-      <div style={{ fontWeight: 600, fontSize: "1rem", color: "#0f172a", marginBottom: "0.25rem" }}>
+      <div style={{ fontWeight: 600, fontSize: "1rem", color: "var(--text)", marginBottom: "0.25rem" }}>
         {message}
       </div>
 
@@ -118,8 +118,8 @@ export function LoadingOverlay({ message = "Please wait…" }: LoadingOverlayPro
         gap: "0.75rem",
       }}
     >
-      <Loader2 size={28} color="#00a884" className="animate-spin" />
-      <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a" }}>{message}</span>
+      <Loader2 size={28} color="var(--brand-teal)" className="animate-spin" />
+      <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text)" }}>{message}</span>
     </div>
   );
 }

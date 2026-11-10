@@ -97,30 +97,30 @@ export function CampaignDetailPage() {
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#00a884",
+                color: "var(--brand-teal)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                background: "#e6f7f3",
+                background: "var(--accent-light)",
                 padding: "0.2rem 0.5rem",
                 borderRadius: "6px",
               }}
             >
               Broadcast Mission
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>•</span>
             <span className={`badge badge-${campaign.status.toLowerCase()}`}>{campaign.status}</span>
           </div>
           <h1>{campaign.name}</h1>
           <div className="muted small" style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.35rem" }}>
             {campaign.template && (
               <span style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                <Sparkles size={14} color="#00a884" />
+                <Sparkles size={14} color="var(--brand-teal)" />
                 <strong>{campaign.template.name}</strong> ({campaign.template.language})
               </span>
             )}
             {campaign.scheduledAt && (
               <span style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                <Calendar size={14} color="#64748b" />
+                <Calendar size={14} color="var(--text-muted)" />
                 <span>Scheduled for {new Date(campaign.scheduledAt).toLocaleString()}</span>
               </span>
             )}
@@ -136,7 +136,7 @@ export function CampaignDetailPage() {
           )}
           {cancellable && (
             <button className="danger-btn" onClick={() => void act("cancel")} disabled={busy}>
-              {busy ? <ButtonSpinner size={15} color="#dc2626" /> : <XCircle size={15} />}
+              {busy ? <ButtonSpinner size={15} color="var(--danger)" /> : <XCircle size={15} />}
               <span>{busy ? "Cancelling…" : "Cancel Campaign"}</span>
             </button>
           )}
@@ -149,7 +149,7 @@ export function CampaignDetailPage() {
       <section className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
           <h2 style={{ fontSize: "1rem", margin: 0 }}>Execution Progress</h2>
-          <span style={{ fontWeight: 700, fontSize: "1rem", color: "#00a884" }}>{pct}% Complete</span>
+          <span style={{ fontWeight: 700, fontSize: "1rem", color: "var(--brand-teal)" }}>{pct}% Complete</span>
         </div>
 
         <div className="progress-track" style={{ height: "8px" }}>
@@ -166,25 +166,25 @@ export function CampaignDetailPage() {
             borderTop: "1px solid var(--border)",
           }}
         >
-          <div style={{ textAlign: "center", padding: "0.5rem", background: "#f8fafc", borderRadius: "8px" }}>
+          <div style={{ textAlign: "center", padding: "0.5rem", background: "var(--bg)", borderRadius: "8px" }}>
             <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>Total Audience</div>
             <div style={{ fontSize: "1.25rem", fontWeight: 700, marginTop: "0.2rem" }}>{campaign.counts.total}</div>
           </div>
-          <div style={{ textAlign: "center", padding: "0.5rem", background: "#f0fdf4", borderRadius: "8px" }}>
-            <div style={{ color: "#16a34a", fontSize: "0.6875rem", textTransform: "uppercase", fontWeight: 700 }}>Sent</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#15803d", marginTop: "0.2rem" }}>{campaign.counts.SENT}</div>
+          <div style={{ textAlign: "center", padding: "0.5rem", background: "var(--success-bg)", borderRadius: "8px" }}>
+            <div style={{ color: "var(--success)", fontSize: "0.6875rem", textTransform: "uppercase", fontWeight: 700 }}>Sent</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--success)", marginTop: "0.2rem" }}>{campaign.counts.SENT}</div>
           </div>
-          <div style={{ textAlign: "center", padding: "0.5rem", background: "#fef2f2", borderRadius: "8px" }}>
-            <div style={{ color: "#dc2626", fontSize: "0.6875rem", textTransform: "uppercase", fontWeight: 700 }}>Failed</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#b91c1c", marginTop: "0.2rem" }}>{campaign.counts.FAILED}</div>
+          <div style={{ textAlign: "center", padding: "0.5rem", background: "var(--danger-bg)", borderRadius: "8px" }}>
+            <div style={{ color: "var(--danger)", fontSize: "0.6875rem", textTransform: "uppercase", fontWeight: 700 }}>Failed</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--danger)", marginTop: "0.2rem" }}>{campaign.counts.FAILED}</div>
           </div>
-          <div style={{ textAlign: "center", padding: "0.5rem", background: "#fffbeb", borderRadius: "8px" }}>
-            <div style={{ color: "#d97706", fontSize: "0.6875rem", textTransform: "uppercase", fontWeight: 700 }}>Pending</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#b45309", marginTop: "0.2rem" }}>{campaign.counts.PENDING}</div>
+          <div style={{ textAlign: "center", padding: "0.5rem", background: "var(--warning-bg)", borderRadius: "8px" }}>
+            <div style={{ color: "var(--warning)", fontSize: "0.6875rem", textTransform: "uppercase", fontWeight: 700 }}>Pending</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--warning)", marginTop: "0.2rem" }}>{campaign.counts.PENDING}</div>
           </div>
-          <div style={{ textAlign: "center", padding: "0.5rem", background: "#f1f5f9", borderRadius: "8px" }}>
+          <div style={{ textAlign: "center", padding: "0.5rem", background: "var(--bg-subtle)", borderRadius: "8px" }}>
             <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>Cancelled</div>
-            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#475569", marginTop: "0.2rem" }}>{campaign.counts.CANCELLED}</div>
+            <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-muted)", marginTop: "0.2rem" }}>{campaign.counts.CANCELLED}</div>
           </div>
         </div>
       </section>
@@ -193,7 +193,7 @@ export function CampaignDetailPage() {
       <section className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
           <h2>
-            <Users size={18} color="#00a884" />
+            <Users size={18} color="var(--brand-teal)" />
             <span>Target Recipients ({campaign.recipients.length})</span>
           </h2>
         </div>
@@ -213,13 +213,13 @@ export function CampaignDetailPage() {
               {campaign.recipients.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    <div style={{ fontWeight: 600, color: "#0f172a" }}>
+                    <div style={{ fontWeight: 600, color: "var(--text)" }}>
                       {r.contact.name || r.contact.profileName || "Anonymous"}
                     </div>
                   </td>
                   <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontFamily: "var(--font-mono)", color: "#475569" }}>
-                      <Smartphone size={13} color="#94a3b8" />
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+                      <Smartphone size={13} color="var(--text-subtle)" />
                       <span>{r.contact.phone}</span>
                     </div>
                   </td>

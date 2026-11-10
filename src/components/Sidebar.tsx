@@ -83,7 +83,7 @@ export function Sidebar({ mobileOpen = false, onClose, collapsed = false, onTogg
         <div className="brand-text">
           <span className="brand-name">
             UnifyLead
-            <ShieldCheck size={16} color="#00a884" />
+            <ShieldCheck size={16} color="var(--brand-teal)" />
           </span>
           <span className="brand-tagline">Enterprise WhatsApp SaaS</span>
         </div>

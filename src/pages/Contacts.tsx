@@ -41,10 +41,10 @@ function tagsWithoutOptOut(tags: string | null | undefined): string | undefined 
 }
 
 const AVATAR_COLORS = [
-  "#e0f2fe", "#fef3c7", "#dcfce7", "#f3e8ff", "#fee2e2", "#ffedd5"
+  "#e0f2fe", "#fef3c7", "#dcfce7", "var(--accent-light)", "var(--danger-bg)", "#FDF1E6"
 ];
 const AVATAR_TEXT = [
-  "#0369a1", "#b45309", "#15803d", "#7e22ce", "#b91c1c", "#c2410c"
+  "var(--info)", "var(--warning)", "var(--success)", "var(--success)", "var(--danger)", "#A8541F"
 ];
 
 function getAvatarColors(name: string) {
@@ -194,18 +194,18 @@ export function ContactsPage() {
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#00a884",
+                color: "var(--brand-teal)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                background: "#e6f7f3",
+                background: "var(--accent-light)",
                 padding: "0.2rem 0.5rem",
                 borderRadius: "6px",
               }}
             >
               Audience Directory
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
               {contacts.length} Contacts
             </span>
           </div>
@@ -237,7 +237,7 @@ export function ContactsPage() {
       <section className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
           <h2>
-            <Users size={18} color="#00a884" />
+            <Users size={18} color="var(--brand-teal)" />
             <span>All Contacts ({contacts.length})</span>
           </h2>
 
@@ -262,8 +262,8 @@ export function ContactsPage() {
           />
         ) : contacts.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
-            <Users size={36} color="#cbd5e1" />
-            <span style={{ fontWeight: 600, color: "#475569" }}>No contacts found</span>
+            <Users size={36} color="#CDDAD7" />
+            <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No contacts found</span>
             <span className="tiny">Click "Add Contact" above or receive an inbound customer message to populate this directory.</span>
           </div>
         ) : (
@@ -307,7 +307,7 @@ export function ContactsPage() {
                             {initial}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: "#0f172a" }}>{name}</div>
+                            <div style={{ fontWeight: 600, color: "var(--text)" }}>{name}</div>
                             {c.profileName && c.name && (
                               <div className="muted tiny">WA: {c.profileName}</div>
                             )}
@@ -315,15 +315,15 @@ export function ContactsPage() {
                         </div>
                       </td>
                       <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontFamily: "var(--font-mono)", color: "#334155" }}>
-                          <Smartphone size={14} color="#00a884" />
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontFamily: "var(--font-mono)", color: "var(--text)" }}>
+                          <Smartphone size={14} color="var(--brand-teal)" />
                           <span>{c.phone}</span>
                         </div>
                       </td>
                       <td>
                         {c.email ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#475569", fontSize: "0.8125rem" }}>
-                            <Mail size={13} color="#94a3b8" />
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--text-muted)", fontSize: "0.8125rem" }}>
+                            <Mail size={13} color="var(--text-subtle)" />
                             <span>{c.email}</span>
                           </div>
                         ) : (
@@ -337,9 +337,9 @@ export function ContactsPage() {
                             title="Replied STOP — all outbound WhatsApp sends to this contact are suppressed"
                             style={{
                               fontSize: "0.6875rem",
-                              background: "#fef2f2",
-                              color: "#b91c1c",
-                              border: "1px solid #fecaca",
+                              background: "var(--danger-bg)",
+                              color: "var(--danger)",
+                              border: "1px solid var(--danger-border)",
                             }}
                           >
                             <Ban size={11} />
@@ -376,7 +376,7 @@ export function ContactsPage() {
                           </button>
                           <button
                             className="ghost-btn"
-                            style={{ padding: "0.35rem 0.6rem", fontSize: "0.75rem", color: "#dc2626" }}
+                            style={{ padding: "0.35rem 0.6rem", fontSize: "0.75rem", color: "var(--danger)" }}
                             onClick={() => void onDelete(c)}
                             title="Delete Contact"
                           >
@@ -397,7 +397,7 @@ export function ContactsPage() {
       {showForm && (
         <Modal
           className="modal-narrow"
-          icon={<UserPlus size={18} color="#00a884" />}
+          icon={<UserPlus size={18} color="var(--brand-teal)" />}
           title={editing ? "Edit Audience Contact" : "Add Audience Contact"}
           onClose={() => !busy && cancelEdit()}
         >
@@ -412,9 +412,9 @@ export function ContactsPage() {
                   fontSize: "0.84rem",
                   padding: "0.65rem 0.85rem",
                   borderRadius: "8px",
-                  background: "#fee2e2",
-                  border: "1px solid #fca5a5",
-                  color: "#991b1b",
+                  background: "var(--danger-bg)",
+                  border: "1px solid var(--danger-border)",
+                  color: "var(--danger)",
                 }}
               >
                 <AlertCircle size={16} style={{ flexShrink: 0 }} />
@@ -437,7 +437,7 @@ export function ContactsPage() {
                   style={isDuplicatePhone ? { borderColor: "#ef4444" } : undefined}
                 />
                 {isDuplicatePhone && (
-                  <span className="field-error" style={{ color: "#dc2626", fontWeight: 600 }}>
+                  <span className="field-error" style={{ color: "var(--danger)", fontWeight: 600 }}>
                     This phone number is already present in your audience contacts.
                   </span>
                 )}

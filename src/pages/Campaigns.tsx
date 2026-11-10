@@ -209,18 +209,18 @@ export function CampaignsPage() {
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#00a884",
+                color: "var(--brand-teal)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                background: "#e6f7f3",
+                background: "var(--accent-light)",
                 padding: "0.2rem 0.5rem",
                 borderRadius: "6px",
               }}
             >
               Bulk Broadcasting
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
               {campaigns.length} Total Campaigns
             </span>
           </div>
@@ -250,7 +250,7 @@ export function CampaignsPage() {
       <section className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
           <h2>
-            <Megaphone size={18} color="#00a884" />
+            <Megaphone size={18} color="var(--brand-teal)" />
             <span>All Broadcast Campaigns ({campaigns.length})</span>
           </h2>
         </div>
@@ -263,8 +263,8 @@ export function CampaignsPage() {
           />
         ) : campaigns.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
-            <Megaphone size={36} color="#cbd5e1" />
-            <span style={{ fontWeight: 600, color: "#475569" }}>No broadcasts scheduled or sent yet</span>
+            <Megaphone size={36} color="#CDDAD7" />
+            <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No broadcasts scheduled or sent yet</span>
             <span className="tiny">Click "New Broadcast" to assemble your first WhatsApp campaign blast.</span>
           </div>
         ) : (
@@ -289,14 +289,14 @@ export function CampaignsPage() {
                   return (
                     <tr key={c.id}>
                       <td>
-                        <div style={{ fontWeight: 600, color: "#0f172a" }}>{c.name}</div>
+                        <div style={{ fontWeight: 600, color: "var(--text)" }}>{c.name}</div>
                         <div className="muted tiny" style={{ fontFamily: "var(--font-mono)" }}>
                           ID: {c.id.slice(0, 8)}…
                         </div>
                       </td>
                       <td>
                         {c.template ? (
-                          <div style={{ fontSize: "0.8125rem", color: "#334155" }}>
+                          <div style={{ fontSize: "0.8125rem", color: "var(--text)" }}>
                             <div style={{ fontWeight: 600 }}>{c.template.name}</div>
                             <div className="muted tiny">{c.template.language}</div>
                           </div>
@@ -337,7 +337,7 @@ export function CampaignsPage() {
                           <div className="progress-fill" style={{ width: `${pct}%` }} />
                         </div>
                         {c.counts.FAILED > 0 && (
-                          <span style={{ fontSize: "0.7rem", color: "#dc2626", marginTop: "0.2rem", display: "inline-block" }}>
+                          <span style={{ fontSize: "0.7rem", color: "var(--danger)", marginTop: "0.2rem", display: "inline-block" }}>
                             ⚠ {c.counts.FAILED} failed
                           </span>
                         )}
@@ -361,7 +361,7 @@ export function CampaignsPage() {
       {showCreate && (
         <Modal
           className="campaign-modal"
-          icon={<Megaphone size={20} color="#00a884" />}
+          icon={<Megaphone size={20} color="var(--brand-teal)" />}
           title="Create Broadcast Campaign"
           onClose={closeCreate}
         >
@@ -394,13 +394,13 @@ export function CampaignsPage() {
                 <div
                   className="span-2"
                   style={{
-                    background: "#f8fafc",
+                    background: "var(--bg)",
                     border: "1px solid var(--border)",
                     borderRadius: "10px",
                     padding: "0.75rem 1rem",
                   }}
                 >
-                  <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "0.35rem" }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "0.35rem" }}>
                     Selected Template Text
                   </div>
                   <div style={{ fontSize: "0.875rem", color: "#1e293b", whiteSpace: "pre-wrap" }}>
@@ -411,21 +411,21 @@ export function CampaignsPage() {
 
               {needsHeaderMedia && header && (
                 <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                  <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#0f172a" }}>
+                  <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text)" }}>
                     Header Media ({header.format})
                   </span>
                   <label
                     style={{
-                      border: "2px dashed #cbd5e1",
+                      border: "2px dashed #CDDAD7",
                       borderRadius: "10px",
                       padding: "0.875rem",
                       textAlign: "center",
                       cursor: "pointer",
-                      background: "#f8fafc",
+                      background: "var(--bg)",
                     }}
                   >
-                    <UploadCloud size={20} color="#00a884" style={{ margin: "0 auto" }} />
-                    <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#0f172a", marginTop: "0.2rem" }}>
+                    <UploadCloud size={20} color="var(--brand-teal)" style={{ margin: "0 auto" }} />
+                    <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text)", marginTop: "0.2rem" }}>
                       {uploadingHeader ? "Uploading media…" : headerHandle ? `Uploaded: ${headerHandle}` : `Select ${header.format.toLowerCase()} file`}
                     </div>
                     <input
@@ -447,7 +447,7 @@ export function CampaignsPage() {
               {/* Dynamic Variables */}
               {varCount > 0 && (
                 <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#334155" }}>
+                  <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text)" }}>
                     Template Variables ({varCount})
                   </div>
                   {params.map((val, idx) => (
@@ -471,7 +471,7 @@ export function CampaignsPage() {
               {/* Button Values (variable URL suffixes + copy codes) */}
               {buttonsNeedingValues.length > 0 && (
                 <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#334155" }}>
+                  <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text)" }}>
                     Button Values ({buttonsNeedingValues.length})
                   </div>
                   {buttonsNeedingValues.map((b) => (
@@ -504,7 +504,7 @@ export function CampaignsPage() {
               <div className="span-2" style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a" }}>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text)" }}>
                       Select Recipients
                     </span>
                     <span
@@ -513,8 +513,8 @@ export function CampaignsPage() {
                         fontWeight: 700,
                         padding: "0.2rem 0.55rem",
                         borderRadius: "9999px",
-                        background: selected.size > 0 ? "#e6f7f3" : "#f1f5f9",
-                        color: selected.size > 0 ? "#047857" : "#64748b",
+                        background: selected.size > 0 ? "var(--accent-light)" : "var(--bg-subtle)",
+                        color: selected.size > 0 ? "var(--success)" : "var(--text-muted)",
                       }}
                     >
                       {selected.size} of {contacts.length} chosen
@@ -550,7 +550,7 @@ export function CampaignsPage() {
                       left: "0.85rem",
                       top: "50%",
                       transform: "translateY(-50%)",
-                      color: "#94a3b8",
+                      color: "var(--text-subtle)",
                       pointerEvents: "none",
                     }}
                   />
@@ -563,7 +563,7 @@ export function CampaignsPage() {
                       width: "100%",
                       padding: "0.55rem 0.875rem 0.55rem 2.4rem",
                       fontSize: "0.8125rem",
-                      background: "#f8fafc",
+                      background: "var(--bg)",
                       border: "1px solid var(--border)",
                       borderRadius: "8px",
                       height: "38px",
@@ -579,7 +579,7 @@ export function CampaignsPage() {
                     overflowY: "auto",
                     border: "1px solid var(--border)",
                     borderRadius: "10px",
-                    background: "#ffffff",
+                    background: "var(--panel)",
                     padding: "0.625rem",
                     display: "flex",
                     flexWrap: "wrap",
@@ -607,21 +607,21 @@ export function CampaignsPage() {
                           fontWeight: isChosen ? 600 : 500,
                           cursor: "pointer",
                           transition: "all 0.15s ease",
-                          background: isChosen ? "#e6f7f3" : "#f8fafc",
-                          border: isChosen ? "1.5px solid #00a884" : "1px solid #cbd5e1",
-                          color: isChosen ? "#047857" : "#334155",
+                          background: isChosen ? "var(--accent-light)" : "var(--bg)",
+                          border: isChosen ? "1.5px solid var(--brand-teal)" : "1px solid #CDDAD7",
+                          color: isChosen ? "var(--success)" : "var(--text)",
                           boxShadow: isChosen ? "0 1px 3px rgba(0, 168, 132, 0.18)" : "none",
                         }}
                       >
                         {isChosen ? (
-                          <Check size={13} strokeWidth={2.5} color="#00a884" />
+                          <Check size={13} strokeWidth={2.5} color="var(--brand-teal)" />
                         ) : (
                           <span
                             style={{
                               width: "6px",
                               height: "6px",
                               borderRadius: "50%",
-                              background: "#94a3b8",
+                              background: "var(--text-subtle)",
                               flexShrink: 0,
                             }}
                           />

@@ -29,9 +29,9 @@ export function toast(options: ToastOptions): void {
 }
 
 const KIND_STYLE: Record<ToastKind, { accent: string; bg: string; border: string; Icon: typeof Info }> = {
-  success: { accent: "#059669", bg: "#f0fdf4", border: "#bbf7d0", Icon: CheckCircle2 },
-  error: { accent: "#dc2626", bg: "#fef2f2", border: "#fecaca", Icon: AlertCircle },
-  info: { accent: "#0284c7", bg: "#f0f9ff", border: "#bae6fd", Icon: Info },
+  success: { accent: "var(--success)", bg: "var(--success-bg)", border: "var(--success-border)", Icon: CheckCircle2 },
+  error: { accent: "var(--danger)", bg: "var(--danger-bg)", border: "var(--danger-border)", Icon: AlertCircle },
+  info: { accent: "var(--info)", bg: "var(--info-bg)", border: "var(--info-border)", Icon: Info },
 };
 
 const MAX_VISIBLE = 4;
@@ -76,9 +76,9 @@ export function ToastHost() {
           <div key={t.id} className="toast" role={t.kind === "error" ? "alert" : "status"} style={{ background: style.bg, borderColor: style.border }}>
             <style.Icon size={18} color={style.accent} style={{ flexShrink: 0, marginTop: "0.1rem" }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "#0f172a" }}>{t.title}</div>
+              <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--text)" }}>{t.title}</div>
               {t.message && (
-                <div style={{ fontSize: "0.8125rem", color: "#334155", marginTop: "0.15rem", lineHeight: 1.45, wordBreak: "break-word" }}>
+                <div style={{ fontSize: "0.8125rem", color: "var(--text)", marginTop: "0.15rem", lineHeight: 1.45, wordBreak: "break-word" }}>
                   {t.message}
                 </div>
               )}
@@ -92,7 +92,7 @@ export function ToastHost() {
                     borderRadius: "6px",
                     fontFamily: "var(--font-mono)",
                     fontSize: "0.6875rem",
-                    color: "#475569",
+                    color: "var(--text-muted)",
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
                     maxHeight: "140px",

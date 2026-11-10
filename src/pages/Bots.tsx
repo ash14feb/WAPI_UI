@@ -132,7 +132,7 @@ export function BotsPage() {
       </header>
 
       {error && <div className="error">{error}</div>}
-      {notice && <div style={{ background: "#e6f7f3", color: "#047857", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem", fontWeight: 600 }}>{notice}</div>}
+      {notice && <div style={{ background: "var(--accent-light)", color: "var(--success)", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem", fontWeight: 600 }}>{notice}</div>}
 
       {rules.length === 0 ? (
         <div className="card muted">No rules yet. Create one — e.g. trigger <code>hi</code> → reply <code>Hello! How can we help?</code>, plus a DEFAULT fallback rule.</div>

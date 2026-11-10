@@ -92,7 +92,7 @@ function StoredTemplatePreview({ t }: { t: MessageTemplate }) {
               padding: "1rem",
               textAlign: "center",
               fontSize: "0.8125rem",
-              color: "#64748b",
+              color: "var(--text-muted)",
               fontWeight: 600,
               marginBottom: "0.5rem",
             }}
@@ -117,14 +117,14 @@ function StoredTemplatePreview({ t }: { t: MessageTemplate }) {
             <div
               key={idx}
               style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
+                background: "var(--panel)",
+                border: "1px solid var(--border)",
                 borderRadius: "8px",
                 padding: "0.5rem 0.75rem",
                 textAlign: "center",
                 fontSize: "0.8125rem",
                 fontWeight: 600,
-                color: "#00a884",
+                color: "var(--brand-teal)",
                 boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
               }}
             >
@@ -419,18 +419,18 @@ export function TemplatesPage() {
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#00a884",
+                color: "var(--brand-teal)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                background: "#e6f7f3",
+                background: "var(--accent-light)",
                 padding: "0.2rem 0.5rem",
                 borderRadius: "6px",
               }}
             >
               Meta Approved Engine
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
               {templates.length} Active Templates
             </span>
           </div>
@@ -464,8 +464,8 @@ export function TemplatesPage() {
       </header>
 
       {syncing && (
-        <div className="notice" style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "#f0fdf9", borderColor: "#a7f3d0", color: "#065f46" }}>
-          <ButtonSpinner size={16} color="#00a884" />
+        <div className="notice" style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "#f0fdf9", borderColor: "var(--success-border)", color: "var(--success)" }}>
+          <ButtonSpinner size={16} color="var(--brand-teal)" />
           <span>Synchronizing message templates with Meta Business Cloud API…</span>
         </div>
       )}
@@ -482,7 +482,7 @@ export function TemplatesPage() {
       <section className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
           <h2>
-            <FileText size={18} color="#00a884" />
+            <FileText size={18} color="var(--brand-teal)" />
             <span>Available Templates ({templates.length})</span>
           </h2>
           <span className="muted small">Real-time status synced with Meta</span>
@@ -496,8 +496,8 @@ export function TemplatesPage() {
           />
         ) : templates.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
-            <FileText size={36} color="#cbd5e1" />
-            <span style={{ fontWeight: 600, color: "#475569" }}>No templates found</span>
+            <FileText size={36} color="#CDDAD7" />
+            <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No templates found</span>
             <span className="tiny">Create your first template or click "Sync from Meta" to pull existing ones.</span>
           </div>
         ) : (
@@ -530,13 +530,13 @@ export function TemplatesPage() {
                       title="Click to preview template"
                     >
                       <td>
-                        <div style={{ fontWeight: 600, color: "#0f172a", fontFamily: "var(--font-mono)" }}>
+                        <div style={{ fontWeight: 600, color: "var(--text)", fontFamily: "var(--font-mono)" }}>
                           {t.name}
                         </div>
                       </td>
                       <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#475569" }}>
-                          <Globe size={14} color="#94a3b8" />
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--text-muted)" }}>
+                          <Globe size={14} color="var(--text-subtle)" />
                           <span>{t.language}</span>
                         </div>
                       </td>
@@ -547,8 +547,8 @@ export function TemplatesPage() {
                             fontWeight: 700,
                             padding: "0.2rem 0.5rem",
                             borderRadius: "6px",
-                            background: "#f1f5f9",
-                            color: "#334155",
+                            background: "var(--bg-subtle)",
+                            color: "var(--text)",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "0.3rem",
@@ -605,7 +605,7 @@ export function TemplatesPage() {
       {/* Create Template Modal */}
       {showCreate && (
         <Modal
-          icon={<Sparkles size={20} color="#00a884" />}
+          icon={<Sparkles size={20} color="var(--brand-teal)" />}
           title="Create Meta Message Template"
           onClose={closeCreate}
           closeTitle={creating ? "Wait for Meta to respond before closing" : "Close"}
@@ -616,7 +616,7 @@ export function TemplatesPage() {
 
             {createError && (
               <div className="modal-form-error" ref={createErrorRef} role="alert">
-                <AlertCircle size={16} color="#dc2626" style={{ flexShrink: 0, marginTop: "0.1rem" }} />
+                <AlertCircle size={16} color="var(--danger)" style={{ flexShrink: 0, marginTop: "0.1rem" }} />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <strong>{createError.title}</strong>
                   {createError.message && <div>{createError.message}</div>}
@@ -709,16 +709,16 @@ export function TemplatesPage() {
                     </span>
                     <label
                       style={{
-                        border: "2px dashed #cbd5e1",
+                        border: "2px dashed #CDDAD7",
                         borderRadius: "10px",
                         padding: "1rem",
                         textAlign: "center",
                         cursor: "pointer",
-                        background: "#f8fafc",
+                        background: "var(--bg)",
                       }}
                     >
-                      <UploadCloud size={24} color="#00a884" style={{ margin: "0 auto" }} />
-                      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a", marginTop: "0.25rem" }}>
+                      <UploadCloud size={24} color="var(--brand-teal)" style={{ margin: "0 auto" }} />
+                      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text)", marginTop: "0.25rem" }}>
                         {uploadingHeader ? "Uploading sample to Meta…" : headerFileName ? headerFileName : `Select sample ${headerFormat.toLowerCase()}`}
                       </div>
                       <input
@@ -740,7 +740,7 @@ export function TemplatesPage() {
                       <button
                         type="button"
                         className="ghost-btn"
-                        style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "#00a884" }}
+                        style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "var(--brand-teal)" }}
                         onClick={handleAddVariable}
                         title="Insert next variable placeholder"
                       >
@@ -764,8 +764,8 @@ export function TemplatesPage() {
                     <div
                       className="span-2"
                       style={{
-                        background: varCount > 0 ? "#f0fdf4" : "#f8fafc",
-                        border: `1px solid ${varCount > 0 ? "#bbf7d0" : "var(--border)"}`,
+                        background: varCount > 0 ? "var(--success-bg)" : "var(--bg)",
+                        border: `1px solid ${varCount > 0 ? "var(--success-border)" : "var(--border)"}`,
                         borderRadius: "10px",
                         padding: "0.875rem",
                         marginTop: "0.25rem",
@@ -773,8 +773,8 @@ export function TemplatesPage() {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: varCount > 0 ? "0.625rem" : "0" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                          <Sparkles size={16} color={varCount > 0 ? "#16a34a" : "#64748b"} />
-                          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: varCount > 0 ? "#15803d" : "#334155" }}>
+                          <Sparkles size={16} color={varCount > 0 ? "var(--success)" : "var(--text-muted)"} />
+                          <span style={{ fontWeight: 600, fontSize: "0.875rem", color: varCount > 0 ? "var(--success)" : "var(--text)" }}>
                             Sample Values (Meta Requirement)
                           </span>
                           {varCount > 0 && (
@@ -787,7 +787,7 @@ export function TemplatesPage() {
                           <button
                             type="button"
                             className="ghost-btn"
-                            style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", color: "#00a884" }}
+                            style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", color: "var(--brand-teal)" }}
                             onClick={handleAddVariable}
                           >
                             <Plus size={12} /> Add {`{{${varCount + 1}}}`}
@@ -796,7 +796,7 @@ export function TemplatesPage() {
                       </div>
 
                       {varCount === 0 ? (
-                        <div style={{ fontSize: "0.8125rem", color: "#64748b", lineHeight: 1.5, marginTop: "0.35rem" }}>
+                        <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", lineHeight: 1.5, marginTop: "0.35rem" }}>
                           Meta requires realistic sample values for every dynamic variable in your template (e.g. <code>{"{{1}}"}</code> for customer name, <code>{"{{2}}"}</code> for order ID).
                           <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                             <span>Click to insert a variable:</span>
@@ -806,10 +806,10 @@ export function TemplatesPage() {
                               style={{
                                 padding: "0.25rem 0.6rem",
                                 fontSize: "0.75rem",
-                                background: "#ffffff",
-                                border: "1px solid #cbd5e1",
+                                background: "var(--panel)",
+                                border: "1px solid #CDDAD7",
                                 borderRadius: "6px",
-                                color: "#00a884",
+                                color: "var(--brand-teal)",
                                 fontWeight: 600,
                               }}
                               onClick={handleAddVariable}
@@ -832,8 +832,8 @@ export function TemplatesPage() {
                             }}
                           >
                             {Array.from({ length: varCount }, (_, i) => i + 1).map((idx) => (
-                              <div key={idx} style={{ background: "#ffffff", padding: "0.625rem", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                                <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#334155", display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+                              <div key={idx} style={{ background: "var(--panel)", padding: "0.625rem", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                                <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text)", display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
                                   <span>Sample for {`{{${idx}}}`}</span>
                                   <span className="muted" style={{ fontWeight: 400 }}>Required</span>
                                 </label>
@@ -867,13 +867,13 @@ export function TemplatesPage() {
                       {fieldErrors.footerText && <span className="field-error">{fieldErrors.footerText}</span>}
                     </label>
 
-                    <div className="span-2" style={{ background: "#f8fafc", border: "1px solid var(--border)", borderRadius: "10px", padding: "0.875rem" }}>
+                    <div className="span-2" style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", padding: "0.875rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                         <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>Call-to-Action Buttons (Optional)</span>
                         <button
                           type="button"
                           className="ghost-btn"
-                          style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", color: "#00a884" }}
+                          style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", color: "var(--brand-teal)" }}
                           onClick={() => buttons.length < 10 && setButtons((p) => [...p, emptyButton()])}
                           disabled={buttons.length >= 10}
                         >
@@ -887,7 +887,7 @@ export function TemplatesPage() {
                         <div className="muted tiny">No buttons — template sends as plain text.</div>
                       )}
                       {buttons.map((b, i) => (
-                        <div key={i} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "0.625rem", marginBottom: "0.5rem" }}>
+                        <div key={i} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "0.625rem", marginBottom: "0.5rem" }}>
                           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
                             <select value={b.type} onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, type: e.target.value as TemplateButton["type"] } : x))} style={{ fontSize: "0.8125rem" }}>
                               <option value="QUICK_REPLY">↩ Quick reply</option>
@@ -995,7 +995,7 @@ export function TemplatesPage() {
 
               {/* Live Preview Side */}
               <div className="preview-pane">
-                <div style={{ fontSize: "0.8125rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "0.5rem" }}>
+                <div style={{ fontSize: "0.8125rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
                   Live WhatsApp Screen Preview
                 </div>
                 <div className="phone-mock">

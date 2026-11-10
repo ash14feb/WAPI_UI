@@ -96,18 +96,18 @@ export function DashboardPage() {
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#00a884",
+                color: "var(--brand-teal)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                background: "#e6f7f3",
+                background: "var(--accent-light)",
                 padding: "0.2rem 0.5rem",
                 borderRadius: "6px",
               }}
             >
               Enterprise Console
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
               Live Telemetry Active
             </span>
           </div>
@@ -152,12 +152,12 @@ export function DashboardPage() {
           <section className="account-banner">
             <div className="account-banner-content">
               <div className="account-banner-title">
-                <ShieldCheck size={24} color="#00a884" />
+                <ShieldCheck size={24} color="var(--brand-teal)" />
                 <span>Meta Official WhatsApp Cloud API Account</span>
                 <span
                   style={{
-                    background: "#00a884",
-                    color: "#ffffff",
+                    background: "var(--brand-teal)",
+                    color: "var(--panel)",
                     fontSize: "0.6875rem",
                     fontWeight: 700,
                     padding: "0.2rem 0.6rem",
@@ -180,7 +180,7 @@ export function DashboardPage() {
                   <div className="account-pill-item">
                     <span className="label">Display Phone</span>
                     <span className="val" style={{ fontFamily: "var(--font-mono)" }}>
-                      <Smartphone size={15} color="#00a884" />
+                      <Smartphone size={15} color="var(--brand-teal)" />
                       {summary.whatsapp.displayPhoneNumber || "—"}
                     </span>
                   </div>
@@ -194,9 +194,9 @@ export function DashboardPage() {
               <Link
                 to="/settings"
                 style={{
-                  background: "rgba(255, 255, 255, 0.1)",
+                  background: "rgba(255, 255, 255, 0.14)",
                   color: "#ffffff",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  border: "1px solid rgba(255, 255, 255, 0.4)",
                   borderRadius: "10px",
                   padding: "0.6rem 1rem",
                   fontSize: "0.8125rem",
@@ -303,7 +303,7 @@ export function DashboardPage() {
             <div className="card" style={{ marginBottom: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
                 <h2>
-                  <Activity size={18} color="#00a884" />
+                  <Activity size={18} color="var(--brand-teal)" />
                   <span>Cloud API Delivery Metrics</span>
                 </h2>
                 <span className="badge badge-approved">99.8% Uptime</span>
@@ -313,12 +313,12 @@ export function DashboardPage() {
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", marginBottom: "0.4rem" }}>
                     <span style={{ fontWeight: 600 }}>Message Delivery Rate</span>
-                    <span style={{ fontWeight: 700, color: "#059669" }}>{deliveryRate}%</span>
+                    <span style={{ fontWeight: 700, color: "var(--success)" }}>{deliveryRate}%</span>
                   </div>
                   <div className="progress-track">
                     <div className="progress-fill" style={{ width: `${deliveryRate}%` }} />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.35rem", fontSize: "0.75rem", color: "#64748b" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.35rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>
                     <span>{summary.deliveredToday} Delivered</span>
                     <span>{summary.messagesToday - summary.deliveredToday} Pending/Retrying</span>
                   </div>
@@ -333,36 +333,36 @@ export function DashboardPage() {
                     borderTop: "1px solid var(--border)",
                   }}
                 >
-                  <div style={{ padding: "0.75rem", background: "#f8fafc", borderRadius: "10px", textAlign: "center" }}>
-                    <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Average Latency</div>
-                    <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", marginTop: "0.2rem" }}>410 ms</div>
-                    <div style={{ fontSize: "0.7rem", color: "#16a34a", marginTop: "0.15rem" }}>⚡ Real-time webhook</div>
+                  <div style={{ padding: "0.75rem", background: "var(--bg)", borderRadius: "10px", textAlign: "center" }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 600 }}>Average Latency</div>
+                    <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text)", marginTop: "0.2rem" }}>410 ms</div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--success)", marginTop: "0.15rem" }}>⚡ Real-time webhook</div>
                   </div>
 
-                  <div style={{ padding: "0.75rem", background: "#f8fafc", borderRadius: "10px", textAlign: "center" }}>
-                    <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Read Rate</div>
-                    <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0284c7", marginTop: "0.2rem" }}>84.6%</div>
-                    <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "0.15rem" }}>Based on ticks</div>
+                  <div style={{ padding: "0.75rem", background: "var(--bg)", borderRadius: "10px", textAlign: "center" }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 600 }}>Read Rate</div>
+                    <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--info)", marginTop: "0.2rem" }}>84.6%</div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>Based on ticks</div>
                   </div>
 
-                  <div style={{ padding: "0.75rem", background: "#f8fafc", borderRadius: "10px", textAlign: "center" }}>
-                    <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Failed Rate</div>
-                    <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#dc2626", marginTop: "0.2rem" }}>0.2%</div>
-                    <div style={{ fontSize: "0.7rem", color: "#16a34a", marginTop: "0.15rem" }}>Below 1% threshold</div>
+                  <div style={{ padding: "0.75rem", background: "var(--bg)", borderRadius: "10px", textAlign: "center" }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 600 }}>Failed Rate</div>
+                    <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--danger)", marginTop: "0.2rem" }}>0.2%</div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--success)", marginTop: "0.15rem" }}>Below 1% threshold</div>
                   </div>
                 </div>
 
                 <div
                   style={{
-                    background: "#f0fdf4",
-                    border: "1px solid #bbf7d0",
+                    background: "var(--success-bg)",
+                    border: "1px solid var(--success-border)",
                     borderRadius: "10px",
                     padding: "0.75rem 1rem",
                     display: "flex",
                     alignItems: "center",
                     gap: "0.75rem",
                     fontSize: "0.8125rem",
-                    color: "#15803d",
+                    color: "var(--success)",
                   }}
                 >
                   <ShieldCheck size={18} style={{ flexShrink: 0 }} />
@@ -377,7 +377,7 @@ export function DashboardPage() {
             <div className="card" style={{ marginBottom: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                 <h2>
-                  <Inbox size={18} color="#00a884" />
+                  <Inbox size={18} color="var(--brand-teal)" />
                   <span>Active Inbox Overview</span>
                 </h2>
                 <Link to="/inbox" className="link-btn">
@@ -410,7 +410,7 @@ export function DashboardPage() {
                           justifyContent: "space-between",
                           padding: "0.75rem",
                           borderRadius: "10px",
-                          background: "#f8fafc",
+                          background: "var(--bg)",
                           border: "1px solid var(--border)",
                           textDecoration: "none",
                           color: "inherit",
@@ -423,13 +423,13 @@ export function DashboardPage() {
                               width: "36px",
                               height: "36px",
                               borderRadius: "50%",
-                              background: "#e2e8f0",
+                              background: "var(--border)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
                               fontWeight: 700,
                               fontSize: "0.875rem",
-                              color: "#334155",
+                              color: "var(--text)",
                             }}
                           >
                             {cInitial}

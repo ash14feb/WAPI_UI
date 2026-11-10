@@ -20,7 +20,7 @@ export function LegalRedirect({ doc }: { doc: keyof typeof DOCS }) {
   return (
     <div className="center muted" style={{ minHeight: "100vh", flexDirection: "column", gap: "0.5rem" }}>
       <span>Opening {target.title}…</span>
-      <a href={target.path} style={{ color: "#00a884", fontWeight: 600 }}>
+      <a href={target.path} style={{ color: "var(--brand-teal)", fontWeight: 600 }}>
         {target.path}
       </a>
     </div>

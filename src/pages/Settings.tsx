@@ -139,18 +139,18 @@ export function SettingsPage() {
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#00a884",
+                color: "var(--brand-teal)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                background: "#e6f7f3",
+                background: "var(--accent-light)",
                 padding: "0.2rem 0.5rem",
                 borderRadius: "6px",
               }}
             >
               Enterprise Config
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>•</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>
               Cloud API v21.0
             </span>
           </div>
@@ -163,7 +163,7 @@ export function SettingsPage() {
 
       {error && <div className="error">{error}</div>}
       {notice && (
-        <div style={{ background: "#e6f7f3", color: "#047857", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem", fontWeight: 600 }}>
+        <div style={{ background: "var(--accent-light)", color: "var(--success)", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem", fontWeight: 600 }}>
           {notice}
         </div>
       )}
@@ -173,7 +173,7 @@ export function SettingsPage() {
         <section className="card" style={{ gridColumn: "1 / -1", marginBottom: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1.25rem" }}>
             <h2>
-              <ShieldCheck size={20} color="#00a884" />
+              <ShieldCheck size={20} color="var(--brand-teal)" />
               <span>Connected WhatsApp Business Accounts</span>
             </h2>
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -203,7 +203,7 @@ export function SettingsPage() {
                 <div
                   key={a.id}
                   style={{
-                    background: "#f8fafc",
+                    background: "var(--bg)",
                     border: "1px solid var(--border)",
                     borderRadius: "12px",
                     padding: "1.25rem",
@@ -212,7 +212,7 @@ export function SettingsPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <span style={{ fontWeight: 700, fontSize: "1.125rem", color: "#0f172a" }}>
+                        <span style={{ fontWeight: 700, fontSize: "1.125rem", color: "var(--text)" }}>
                           {a.businessName || tenant?.name || "WhatsApp Business Account"}
                         </span>
                         <span className={`badge badge-${connected ? "approved" : "rejected"}`}>
@@ -239,7 +239,7 @@ export function SettingsPage() {
                       display: "grid",
                       gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                       gap: "1rem",
-                      background: "#ffffff",
+                      background: "var(--panel)",
                       border: "1px solid var(--border-subtle)",
                       borderRadius: "10px",
                       padding: "1rem",
@@ -249,7 +249,7 @@ export function SettingsPage() {
                       <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>
                         Display Phone Number
                       </div>
-                      <div style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: "#0f172a", marginTop: "0.25rem" }}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--text)", marginTop: "0.25rem" }}>
                         {show ? (a.displayPhoneNumber || "—") : maskPhone(a.displayPhoneNumber)}
                       </div>
                     </div>
@@ -258,7 +258,7 @@ export function SettingsPage() {
                       <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>
                         Phone Number ID
                       </div>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem", color: "#475569", marginTop: "0.25rem" }}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
                         {show ? a.phoneNumberId : maskId(a.phoneNumberId)}
                       </div>
                     </div>
@@ -267,7 +267,7 @@ export function SettingsPage() {
                       <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>
                         WABA Account ID
                       </div>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem", color: "#475569", marginTop: "0.25rem" }}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
                         {show ? a.wabaId : maskId(a.wabaId)}
                       </div>
                     </div>
@@ -276,7 +276,7 @@ export function SettingsPage() {
                       <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>
                         Account Status
                       </div>
-                      <div style={{ fontWeight: 600, color: a.status === "ACTIVE" ? "#16a34a" : "#00a884", marginTop: "0.25rem" }}>
+                      <div style={{ fontWeight: 600, color: a.status === "ACTIVE" ? "var(--success)" : "var(--brand-teal)", marginTop: "0.25rem" }}>
                         {a.status || "ACTIVE"}
                       </div>
                     </div>
@@ -291,7 +291,7 @@ export function SettingsPage() {
         <section className="card" style={{ marginBottom: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <h2>
-              <Building size={18} color="#00a884" />
+              <Building size={18} color="var(--brand-teal)" />
               <span>Workspace & Security</span>
             </h2>
             <span className="badge badge-approved">Active</span>
@@ -309,17 +309,17 @@ export function SettingsPage() {
 
             <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--border)" }}>
               <span className="muted small">Admin Account</span>
-              <span style={{ fontSize: "0.875rem", color: "#334155" }}>{user?.email || "—"}</span>
+              <span style={{ fontSize: "0.875rem", color: "var(--text)" }}>{user?.email || "—"}</span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--border)" }}>
               <span className="muted small">Data Encryption</span>
-              <span style={{ fontSize: "0.875rem", color: "#16a34a", fontWeight: 600 }}>AES-256 GCM</span>
+              <span style={{ fontSize: "0.875rem", color: "var(--success)", fontWeight: 600 }}>AES-256 GCM</span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0" }}>
               <span className="muted small">Connected API Endpoint</span>
-              <span className="mono" style={{ fontSize: "0.8125rem", color: "#00a884", fontWeight: 600 }}>{API_URL}</span>
+              <span className="mono" style={{ fontSize: "0.8125rem", color: "var(--brand-teal)", fontWeight: 600 }}>{API_URL}</span>
             </div>
           </div>
         </section>

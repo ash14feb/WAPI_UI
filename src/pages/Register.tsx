@@ -35,14 +35,14 @@ export function RegisterPage() {
       <form className="auth-card" onSubmit={onSubmit}>
         <div className="auth-brand">
           <img src={logoUrl} alt="UnifyLead logo" className="auth-logo" />
-          <strong style={{ fontSize: "1.25rem", color: "#0f172a" }}>UnifyLead</strong>
+          <strong style={{ fontSize: "1.25rem", color: "var(--text)" }}>UnifyLead</strong>
           <span className="muted small" style={{ fontWeight: 500 }}>
             Enterprise WhatsApp Cloud API Platform
           </span>
         </div>
 
         <div style={{ textAlign: "center", margin: "1rem 0 1.25rem" }}>
-          <h1 style={{ fontSize: "1.5rem", marginBottom: "0.25rem", color: "#0f172a" }}>Create account</h1>
+          <h1 style={{ fontSize: "1.5rem", marginBottom: "0.25rem", color: "var(--text)" }}>Create account</h1>
           <p className="muted small" style={{ margin: 0 }}>
             Set up your organization workspace and team inbox.
           </p>
@@ -52,7 +52,7 @@ export function RegisterPage() {
 
         <label>
           <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-            <User size={13} color="#64748b" />
+            <User size={13} color="var(--text-muted)" />
             <span>Full Name</span>
           </span>
           <input
@@ -66,7 +66,7 @@ export function RegisterPage() {
 
         <label>
           <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-            <Building size={13} color="#64748b" />
+            <Building size={13} color="var(--text-muted)" />
             <span>Company / Workspace Name</span>
           </span>
           <input
@@ -79,7 +79,7 @@ export function RegisterPage() {
 
         <label>
           <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-            <Mail size={13} color="#64748b" />
+            <Mail size={13} color="var(--text-muted)" />
             <span>Work Email</span>
           </span>
           <input
@@ -94,7 +94,7 @@ export function RegisterPage() {
 
         <label>
           <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-            <Lock size={13} color="#64748b" />
+            <Lock size={13} color="var(--text-muted)" />
             <span>Password (min 8 characters)</span>
           </span>
           <input
@@ -133,7 +133,7 @@ export function RegisterPage() {
             href="/terms-of-service"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: "#00a884", fontWeight: 600 }}
+            style={{ color: "var(--brand-teal)", fontWeight: 600 }}
           >
             Terms of Service
           </a>{" "}
@@ -142,7 +142,7 @@ export function RegisterPage() {
             href="/privacy-policy"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: "#00a884", fontWeight: 600 }}
+            style={{ color: "var(--brand-teal)", fontWeight: 600 }}
           >
             Privacy Policy
           </a>
@@ -159,7 +159,7 @@ export function RegisterPage() {
           }}
         >
           <span className="muted">Already registered? </span>
-          <Link to="/login" style={{ color: "#00a884", fontWeight: 600, textDecoration: "none" }}>
+          <Link to="/login" style={{ color: "var(--brand-teal)", fontWeight: 600, textDecoration: "none" }}>
             Sign in
           </Link>
         </div>
