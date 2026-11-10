@@ -345,7 +345,7 @@ function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, sa
         </div>
       )}
       <label style={{ fontSize: 13 }}>Flow name<br /><input value={name} onChange={(e) => setName(e.target.value)} placeholder="cod_confirm_form" style={{ ...input, width: 320, fontFamily: "monospace" }} /></label>
-      <div style={{ display: "grid", gridTemplateColumns: "170px 1fr 270px", gap: 12, marginTop: 12 }}>
+      <div className="flow-builder-grid" style={{ marginTop: 12 }}>
         {/* Palette */}
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 6 }}>ELEMENTS — drag onto canvas</div>

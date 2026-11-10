@@ -118,6 +118,7 @@ body {
   font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
+  overflow-x: hidden;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -142,6 +143,7 @@ h1, h2, h3 {
 .tiny { font-size: 0.75rem; line-height: 1rem; }
 .mono { font-family: var(--font-mono); }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wrap-anywhere { overflow-wrap: anywhere; word-break: break-word; }
 
 .error {
   background: var(--danger-bg);
@@ -466,6 +468,8 @@ h1, h2, h3 {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--success);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pulse-dot {
@@ -777,80 +781,6 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-/* WABA Account Banner Card */
-.account-banner {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, #0b2228 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-card);
-  padding: 1.5rem 1.75rem;
-  color: rgba(255, 255, 255, 0.82);
-  margin-bottom: 1.75rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2rem;
-  box-shadow: 0 10px 25px -5px rgba(16, 46, 53, 0.4);
-  position: relative;
-  overflow: hidden;
-}
-
-.account-banner::after {
-  content: "";
-  position: absolute;
-  right: -50px;
-  bottom: -50px;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(25, 184, 154, 0.22) 0%, rgba(25, 184, 154, 0) 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.account-banner-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  z-index: 1;
-}
-
-.account-banner-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.account-pill-grid {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.account-pill-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.account-pill-item .label {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.62);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.account-pill-item .val {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
 }
 
 /* Quick Action Strip */
@@ -1791,17 +1721,49 @@ h1, h2, h3 {
   font-size: 0.875rem;
 }
 
+/* ---- Content grids (collapse before the page can overflow) ---- */
+.dashboard-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 1.5rem;
+}
+
+.metric-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.campaign-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.flow-builder-grid {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) 270px;
+  gap: 12px;
+}
+
 /* Responsive Overrides */
 @media (max-width: 900px) {
   .stat-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .quick-actions-bar {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .account-banner {
-    flex-direction: column;
-    align-items: flex-start;
+  .dashboard-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .flow-builder-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1975,6 +1937,12 @@ h1, h2, h3 {
   }
   .form-grid {
     grid-template-columns: 1fr;
+  }
+  .metric-tile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .campaign-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .form-grid .span-2 {
     grid-column: span 1;

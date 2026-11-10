@@ -156,16 +156,7 @@ export function CampaignDetailPage() {
           <div className="progress-fill" style={{ width: `${pct}%` }} />
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
-            gap: "0.75rem",
-            marginTop: "1.25rem",
-            paddingTop: "1rem",
-            borderTop: "1px solid var(--border)",
-          }}
-        >
+        <div className="campaign-stat-grid">
           <div style={{ textAlign: "center", padding: "0.5rem", background: "var(--bg)", borderRadius: "8px" }}>
             <div className="muted tiny" style={{ textTransform: "uppercase", fontWeight: 700 }}>Total Audience</div>
             <div style={{ fontSize: "1.25rem", fontWeight: 700, marginTop: "0.2rem" }}>{campaign.counts.total}</div>

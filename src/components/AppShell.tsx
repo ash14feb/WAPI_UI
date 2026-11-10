@@ -148,7 +148,7 @@ export function AppShell() {
             <AccountSwitcher />
             <div className="top-meta-badge header-badge-desktop">
               <span className="pulse-dot" />
-              <span>Meta Cloud API v20.0 • Connected</span>
+              <span>Connected (v20.0)</span>
             </div>
           </div>
         </header>

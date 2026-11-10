@@ -12,13 +12,11 @@ import {
   TrendingUp,
   ArrowUpRight,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   Plus,
   RefreshCw,
   Activity,
   ChevronRight,
-  ExternalLink,
 } from "lucide-react";
 
 interface StatCardProps {
@@ -148,72 +146,6 @@ export function DashboardPage() {
 
       {summary && (
         <>
-          {/* WhatsApp Account Banner Card */}
-          <section className="account-banner">
-            <div className="account-banner-content">
-              <div className="account-banner-title">
-                <ShieldCheck size={24} color="var(--brand-teal)" />
-                <span>Meta Official WhatsApp Cloud API Account</span>
-                <span
-                  style={{
-                    background: "var(--brand-teal)",
-                    color: "var(--panel)",
-                    fontSize: "0.6875rem",
-                    fontWeight: 700,
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "9999px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  Verified WABA
-                </span>
-              </div>
-
-              {summary.whatsapp ? (
-                <div className="account-pill-grid">
-                  <div className="account-pill-item">
-                    <span className="label">Registered Business</span>
-                    <span className="val">{summary.whatsapp.businessName || tenant?.name || "Connected WABA"}</span>
-                  </div>
-
-                  <div className="account-pill-item">
-                    <span className="label">Display Phone</span>
-                    <span className="val" style={{ fontFamily: "var(--font-mono)" }}>
-                      <Smartphone size={15} color="var(--brand-teal)" />
-                      {summary.whatsapp.displayPhoneNumber || "—"}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="muted small">No WhatsApp Business Account connected yet.</div>
-              )}
-            </div>
-
-            <div style={{ display: "flex", gap: "0.75rem", zIndex: 2 }}>
-              <Link
-                to="/settings"
-                style={{
-                  background: "rgba(255, 255, 255, 0.14)",
-                  color: "var(--text-inverse)",
-                  border: "1px solid rgba(255, 255, 255, 0.4)",
-                  borderRadius: "10px",
-                  padding: "0.6rem 1rem",
-                  fontSize: "0.8125rem",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <span>Account Settings</span>
-                <ExternalLink size={14} />
-              </Link>
-            </div>
-          </section>
-
           {/* Quick Actions Bar */}
           <div className="quick-actions-bar">
             <Link to="/campaigns" className="quick-action-btn">
@@ -298,7 +230,7 @@ export function DashboardPage() {
           </div>
 
           {/* Detailed 2-Column Section */}
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "1.5rem" }}>
+          <div className="dashboard-split">
             {/* Delivery Health & Quality */}
             <div className="card" style={{ marginBottom: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
@@ -324,15 +256,7 @@ export function DashboardPage() {
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: "0.75rem",
-                    paddingTop: "0.5rem",
-                    borderTop: "1px solid var(--border)",
-                  }}
-                >
+                <div className="metric-tile-grid">
                   <div style={{ padding: "0.75rem", background: "var(--bg)", borderRadius: "10px", textAlign: "center" }}>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 600 }}>Average Latency</div>
                     <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text)", marginTop: "0.2rem" }}>410 ms</div>
