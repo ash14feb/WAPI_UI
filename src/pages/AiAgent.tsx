@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api, ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
+import { Modal } from "../components/Modal";
 import {
   BookOpen,
   Brain,
@@ -1021,12 +1022,11 @@ function KnowledgeTab(props: {
       )}
 
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal modal-narrow" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h2>{editing ? "Edit knowledge" : "New knowledge entry"}</h2>
-              <button className="ghost-btn" onClick={() => setShowForm(false)}><X size={16} /></button>
-            </div>
+        <Modal
+          className="modal-narrow"
+          title={editing ? "Edit knowledge" : "New knowledge entry"}
+          onClose={() => !busy && setShowForm(false)}
+        >
             <form className="form-grid" onSubmit={(e) => void submit(e)}>
               <label className="span-2">
                 Title
@@ -1060,13 +1060,13 @@ function KnowledgeTab(props: {
                 Active
               </label>
               <div className="span-2 modal-actions">
+                <button type="button" className="secondary-btn" disabled={busy} onClick={() => setShowForm(false)}>Cancel</button>
                 <button className="primary-btn" disabled={busy}>
                   {busy ? <ButtonSpinner /> : editing ? "Save entry" : "Add entry"}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
@@ -1247,12 +1247,11 @@ function OffersTab(props: {
       )}
 
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal modal-narrow" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h2>{editing ? "Edit offer" : "New offer"}</h2>
-              <button className="ghost-btn" onClick={() => setShowForm(false)}><X size={16} /></button>
-            </div>
+        <Modal
+          className="modal-narrow"
+          title={editing ? "Edit offer" : "New offer"}
+          onClose={() => !busy && setShowForm(false)}
+        >
             <form className="form-grid" onSubmit={(e) => void submit(e)}>
               <label className="span-2">
                 Name
@@ -1322,13 +1321,13 @@ function OffersTab(props: {
                 Active
               </label>
               <div className="span-2 modal-actions">
+                <button type="button" className="secondary-btn" disabled={busy} onClick={() => setShowForm(false)}>Cancel</button>
                 <button className="primary-btn" disabled={busy}>
                   {busy ? <ButtonSpinner /> : editing ? "Save offer" : "Create offer"}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

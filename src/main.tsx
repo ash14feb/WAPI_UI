@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { AccountProvider } from "./accounts/AccountContext";
 import { App } from "./App";
+import { ToastHost } from "./components/Toast";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -12,6 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <AccountProvider>
           <App />
+          <ToastHost />
         </AccountProvider>
       </AuthProvider>
     </BrowserRouter>

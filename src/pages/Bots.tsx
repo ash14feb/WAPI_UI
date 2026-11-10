@@ -3,7 +3,8 @@ import type { FormEvent } from "react";
 import { api, ApiError, asArray } from "../api/client";
 import { accountLabel, useAccounts } from "../accounts/AccountContext";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
-import { Bot, Plus, Pencil, Trash2, X, Zap } from "lucide-react";
+import { Modal } from "../components/Modal";
+import { Bot, Plus, Pencil, Trash2, Zap } from "lucide-react";
 
 interface BotRule {
   id: string;
@@ -179,12 +180,11 @@ export function BotsPage() {
       )}
 
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal modal-narrow" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h2>{editing ? "Edit rule" : "New bot rule"}</h2>
-              <button className="ghost-btn" onClick={() => setShowForm(false)}><X size={16} /></button>
-            </div>
+        <Modal
+          className="modal-narrow"
+          title={editing ? "Edit rule" : "New bot rule"}
+          onClose={() => !busy && setShowForm(false)}
+        >
             <form className="form-grid" onSubmit={(e) => void onSubmit(e)}>
               <label className="span-2">Name<input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required maxLength={200} /></label>
               <label className="span-2">Number
@@ -214,11 +214,11 @@ export function BotsPage() {
                 Active
               </label>
               <div className="span-2 modal-actions">
+                <button type="button" className="secondary-btn" disabled={busy} onClick={() => setShowForm(false)}>Cancel</button>
                 <button className="primary-btn" disabled={busy}>{busy ? <ButtonSpinner /> : editing ? "Save rule" : "Create rule"}</button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

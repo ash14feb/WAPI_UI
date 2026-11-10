@@ -15,10 +15,21 @@ import { FlowsPage } from "./pages/Flows";
 import { AiAgentPage } from "./pages/AiAgent";
 import { InboxPage } from "./inbox/InboxPage";
 import { ConversationView } from "./inbox/ConversationView";
+import { LegalRedirect } from "./pages/Legal";
 
 export function App() {
   return (
     <Routes>
+      {/* Public legal pages: must resolve before RequireAuth, otherwise a direct
+          hit redirects to /login (and App Review cannot reach them). */}
+      <Route path="/privacy-policy" element={<LegalRedirect doc="privacy" />} />
+      <Route path="/privacy-policy.html" element={<LegalRedirect doc="privacy" />} />
+      <Route path="/terms-of-service" element={<LegalRedirect doc="terms" />} />
+      <Route path="/terms-of-service.html" element={<LegalRedirect doc="terms" />} />
+      <Route path="/terms" element={<LegalRedirect doc="terms" />} />
+      <Route path="/data-deletion" element={<LegalRedirect doc="deletion" />} />
+      <Route path="/data-deletion-instructions" element={<LegalRedirect doc="deletion" />} />
+      <Route path="/data-deletion.html" element={<LegalRedirect doc="deletion" />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route

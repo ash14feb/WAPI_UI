@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api, ApiError, asArray } from "../api/client";
 import type { Contact } from "../api/types";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
+import { Modal } from "../components/Modal";
 import {
   Users,
   UserPlus,
@@ -11,7 +12,6 @@ import {
   Mail,
   Edit3,
   Trash2,
-  X,
   ShieldCheck,
   AlertCircle,
   Ban,
@@ -395,18 +395,12 @@ export function ContactsPage() {
 
       {/* Edit / Create Contact Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={cancelEdit}>
-          <div className="modal modal-narrow" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <UserPlus size={18} color="#00a884" />
-                <h2>{editing ? "Edit Audience Contact" : "Add Audience Contact"}</h2>
-              </div>
-              <button className="ghost-btn" onClick={cancelEdit}>
-                <X size={18} />
-              </button>
-            </div>
-
+        <Modal
+          className="modal-narrow"
+          icon={<UserPlus size={18} color="#00a884" />}
+          title={editing ? "Edit Audience Contact" : "Add Audience Contact"}
+          onClose={() => !busy && cancelEdit()}
+        >
             {formError && (
               <div
                 className="error"
@@ -505,8 +499,7 @@ export function ContactsPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

@@ -2,17 +2,19 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError, asArray, uploadFile } from "../api/client";
+import { explainApiError } from "../api/errors";
 import { useAccounts } from "../accounts/AccountContext";
 import type { Campaign, Contact, MessageTemplate } from "../api/types";
 import { countVars, extractBodyText, extractButtons, extractHeader, renderPreview } from "../inbox/templatePreview";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
+import { Modal } from "../components/Modal";
+import { toast } from "../components/Toast";
 import {
   Megaphone,
   Plus,
   Search,
   CheckCircle2,
   Clock,
-  X,
   UploadCloud,
   ChevronRight,
   Send,
@@ -30,8 +32,6 @@ export function CampaignsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [serverDetails, setServerDetails] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   const [name, setName] = useState("");
@@ -128,7 +128,10 @@ export function CampaignsPage() {
       const r = await uploadFile("/api/v1/whatsapp/media/upload", file);
       setHeaderHandle(r.handle);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Media upload failed");
+      toast({
+        kind: "error",
+        ...explainApiError(err, { action: "Header media upload failed", fallback: "Meta did not accept the file" }),
+      });
     } finally {
       setUploadingHeader(false);
     }
@@ -142,13 +145,16 @@ export function CampaignsPage() {
     buttonsNeedingValues.every((b) => (buttonVals[b.index] ?? "").trim().length > 0) &&
     (!needsHeaderMedia || Boolean(headerHandle || headerLink.trim()));
 
+  function closeCreate() {
+    if (creating) return;
+    setShowCreate(false);
+  }
+
   async function onCreate(e: FormEvent) {
     e.preventDefault();
     if (!formValid || creating) return;
     setCreating(true);
     setError(null);
-    setNotice(null);
-    setServerDetails(null);
     try {
       const created = await api<Campaign>("/api/v1/campaigns", {
         method: "POST",
@@ -171,7 +177,11 @@ export function CampaignsPage() {
           scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
         }),
       });
-      setNotice(`Broadcast campaign created with ${selected.size} recipient(s).`);
+      toast({
+        kind: "success",
+        title: `Broadcast created for ${selected.size} recipient${selected.size === 1 ? "" : "s"}`,
+        message: scheduledAt ? "It will start at the scheduled time." : "Sending has started.",
+      });
       setName("");
       setTemplateId("");
       setSelected(new Set());
@@ -182,14 +192,9 @@ export function CampaignsPage() {
       await load();
       navigate(`/campaigns/${created.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Create failed");
-      if (err instanceof ApiError && err.details) {
-        try {
-          setServerDetails(JSON.stringify(err.details, null, 2));
-        } catch {
-          setServerDetails(String(err.details));
-        }
-      }
+      const explained = explainApiError(err, { action: "Broadcast was not created", fallback: "The request was rejected" });
+      setError(explained.title);
+      toast({ kind: "error", ...explained, duration: 12000 });
     } finally {
       setCreating(false);
     }
@@ -240,15 +245,6 @@ export function CampaignsPage() {
       </header>
 
       {error && <div className="error">{error}</div>}
-      {serverDetails && (
-        <details className="card" style={{ background: "#fef2f2" }}>
-          <summary className="small" style={{ color: "#dc2626", fontWeight: 600 }}>
-            Server validation details
-          </summary>
-          <pre className="small mono" style={{ margin: "0.5rem 0 0", color: "#991b1b" }}>{serverDetails}</pre>
-        </details>
-      )}
-      {notice && <div className="notice">{notice}</div>}
 
       {/* Broadcasts List Card */}
       <section className="card">
@@ -363,23 +359,12 @@ export function CampaignsPage() {
 
       {/* New Broadcast Modal */}
       {showCreate && (
-        <div className="modal-overlay campaign-modal-overlay" onClick={() => setShowCreate(false)}>
-          <div className="modal campaign-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Megaphone size={20} color="#00a884" />
-                <h2>Create Broadcast Campaign</h2>
-              </div>
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => setShowCreate(false)}
-                title="Close"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
+        <Modal
+          className="campaign-modal"
+          icon={<Megaphone size={20} color="#00a884" />}
+          title="Create Broadcast Campaign"
+          onClose={closeCreate}
+        >
             <form onSubmit={onCreate} className="form-grid campaign-form">
               <label className="span-2">
                 Broadcast Campaign Name
@@ -665,8 +650,7 @@ export function CampaignsPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

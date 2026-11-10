@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { ButtonSpinner, PageLoader } from "../components/Loader";
+import { Modal } from "../components/Modal";
 
 interface FlowField { kind: string; label: string; name: string; required?: boolean; placeholder?: string; options?: string[]; }
 interface FlowScreen { id: string; title: string; fields: FlowField[]; }
@@ -328,8 +329,13 @@ function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, sa
   }
 
   return (
-    <div style={{ ...card, borderColor: "#111827" }}>
-      <h3 style={{ marginTop: 0 }}>{editingName ? `Edit draft: ${editingName}` : "New flow"} — drag & drop builder</h3>
+    <Modal
+      className="flow-builder-modal"
+      title={editingName ? `Edit draft: ${editingName}` : "New flow"}
+      subtitle="Drag & drop builder"
+      onClose={() => !busy && onCancel()}
+      style={{ maxWidth: "1180px" }}
+    >
       {formErrors.length > 0 && (
         <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
           <strong style={{ color: "#991b1b" }}>Fix before saving:</strong>
@@ -417,7 +423,7 @@ function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, sa
           <PhonePreview screen={screen} flowName={name} />
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

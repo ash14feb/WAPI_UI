@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { api, ApiError, uploadFile } from "../api/client";
+import { explainApiError } from "../api/errors";
+import { Modal } from "../components/Modal";
+import { toast } from "../components/Toast";
+import type { ExplainedError } from "../api/errors";
 import { accountLabel, useAccounts } from "../accounts/AccountContext";
 import type { MessageTemplate } from "../api/types";
 import {
@@ -140,9 +144,9 @@ export function TemplatesPage() {
   const [syncing, setSyncing] = useState(false);
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [serverDetails, setServerDetails] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<ExplainedError | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const createErrorRef = useRef<HTMLDivElement>(null);
   const [previewT, setPreviewT] = useState<MessageTemplate | null>(null);
 
   const [name, setName] = useState("");
@@ -200,18 +204,21 @@ export function TemplatesPage() {
   async function onSync() {
     setSyncing(true);
     setError(null);
-    setNotice(null);
     try {
-      await api("/api/v1/whatsapp/templates/sync", {
+      const r = await api<{ synced: number }>("/api/v1/whatsapp/templates/sync", {
         method: "POST",
         body: JSON.stringify({ ...(selectedId ? { whatsappAccountId: selectedId } : {}) }),
       });
       await load();
-      setNotice(
-        `Templates synced successfully from Meta Business Manager${selected ? ` (${accountLabel(selected)})` : ""}.`,
-      );
+      toast({
+        kind: "success",
+        title: `Synced ${r?.synced ?? 0} template${r?.synced === 1 ? "" : "s"} from Meta`,
+        message: selected ? accountLabel(selected) : undefined,
+      });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Sync failed");
+      const explained = explainApiError(err, { action: "Template sync failed", fallback: "Meta did not return templates" });
+      setError(explained.title);
+      toast({ kind: "error", ...explained, duration: 12000 });
     } finally {
       setSyncing(false);
     }
@@ -231,20 +238,28 @@ export function TemplatesPage() {
     setSampleMap({});
     setCodeExpiry("10");
     setButtons([]);
-    setServerDetails(null);
+    setCreateError(null);
+  }
+
+  function closeCreate() {
+    if (creating) return;
+    setShowCreate(false);
+    setCreateError(null);
   }
 
   async function onUploadHeaderSample(file: File | undefined) {
     if (!file || uploadingHeader) return;
     setUploadingHeader(true);
-    setError(null);
     try {
       const r = await uploadFile("/api/v1/whatsapp/media/upload", file, "sample");
       setHeaderHandle(r.handle);
       setHeaderFileName(file.name);
       setHeaderPreviewUrl(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Sample upload failed");
+      toast({
+        kind: "error",
+        ...explainApiError(err, { action: "Sample media upload failed", fallback: "Meta did not accept the file" }),
+      });
     } finally {
       setUploadingHeader(false);
     }
@@ -256,9 +271,7 @@ export function TemplatesPage() {
     e.preventDefault();
     if (creating) return;
     setCreating(true);
-    setError(null);
-    setNotice(null);
-    setServerDetails(null);
+    setCreateError(null);
     try {
       const varCount = countVars(bodyText);
       const exList = Array.from({ length: varCount }, (_, i) => (sampleMap[i + 1] ?? "").trim());
@@ -287,23 +300,29 @@ export function TemplatesPage() {
           codeExpirationMinutes: isAuth ? Number(codeExpiry) || 10 : undefined,
         }),
       });
-      setNotice("Template submitted — status APPROVED in studio. Sync to refresh status.");
+      toast({
+        kind: "success",
+        title: "Template submitted to Meta",
+        message: "It is now PENDING review. Click Sync from Meta to refresh its status.",
+      });
       resetForm();
       setShowCreate(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Create failed");
-      if (err instanceof ApiError && err.details) {
-        try {
-          setServerDetails(JSON.stringify(err.details, null, 2));
-        } catch {
-          setServerDetails(String(err.details));
-        }
-      }
+      const explained = explainApiError(err, {
+        action: "Template was not created",
+        fallback: "Meta rejected the request",
+      });
+      setCreateError(explained);
+      toast({ kind: "error", ...explained, duration: 12000 });
     } finally {
       setCreating(false);
     }
   }
+
+  useEffect(() => {
+    if (createError) createErrorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [createError]);
 
   const varCount = countVars(bodyText);
   const sampleList = Array.from({ length: varCount }, (_, i) => (sampleMap[i + 1] ?? "").trim());
@@ -435,7 +454,7 @@ export function TemplatesPage() {
             className="primary-btn"
             onClick={() => {
               setShowCreate(true);
-              setError(null);
+              setCreateError(null);
             }}
           >
             <Plus size={16} />
@@ -451,8 +470,14 @@ export function TemplatesPage() {
         </div>
       )}
 
-      {error && <div className="error">{error}</div>}
-      {notice && <div className="notice">{notice}</div>}
+      {error && (
+        <div className="error" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem" }}>
+          <span>{error}</span>
+          <button type="button" className="ghost-btn" onClick={() => setError(null)} title="Dismiss">
+            <X size={15} />
+          </button>
+        </div>
+      )}
 
       <section className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
@@ -579,36 +604,29 @@ export function TemplatesPage() {
 
       {/* Create Template Modal */}
       {showCreate && (
-        <div className="modal-overlay" onClick={() => setShowCreate(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Sparkles size={20} color="#00a884" />
-                <h2>Create Meta Message Template</h2>
-              </div>
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => setShowCreate(false)}
-                title="Close"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
+        <Modal
+          icon={<Sparkles size={20} color="#00a884" />}
+          title="Create Meta Message Template"
+          onClose={closeCreate}
+          closeTitle={creating ? "Wait for Meta to respond before closing" : "Close"}
+        >
             <p className="muted small" style={{ margin: "0 0 1rem" }}>
               Templates will be reviewed by Meta. Use {"{{1}}, {{2}}"} for dynamic customer variables and provide sample values.
             </p>
 
-            {serverDetails && (
-              <details className="card" style={{ padding: "0.75rem", background: "#fef2f2" }}>
-                <summary className="small" style={{ color: "#dc2626", fontWeight: 600, cursor: "pointer" }}>
-                  Server validation error details
-                </summary>
-                <pre className="small mono" style={{ margin: "0.5rem 0 0", color: "#991b1b", overflowX: "auto" }}>
-                  {serverDetails}
-                </pre>
-              </details>
+            {createError && (
+              <div className="modal-form-error" ref={createErrorRef} role="alert">
+                <AlertCircle size={16} color="#dc2626" style={{ flexShrink: 0, marginTop: "0.1rem" }} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <strong>{createError.title}</strong>
+                  {createError.message && <div>{createError.message}</div>}
+                  {createError.detail && (
+                    <div className="mono tiny" style={{ marginTop: "0.25rem", color: "#7f1d1d", wordBreak: "break-word" }}>
+                      {createError.detail}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             <div className="create-grid">
@@ -959,7 +977,7 @@ export function TemplatesPage() {
                 )}
 
                 <div className="span-2 modal-actions">
-                  <button type="button" className="secondary-btn" onClick={() => setShowCreate(false)}>
+                  <button type="button" className="secondary-btn" onClick={closeCreate} disabled={creating}>
                     Cancel
                   </button>
                   <button type="submit" className="primary-btn" disabled={creating || !formValid}>
@@ -1034,28 +1052,19 @@ export function TemplatesPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Preview Dialog */}
       {previewT && (
-        <div className="modal-overlay" onClick={() => setPreviewT(null)}>
-          <div className="modal modal-narrow" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <div>
-                <h2>{previewT.name}</h2>
-                <div className="muted small">
-                  {previewT.language} · {previewT.category ?? "UTILITY"}
-                </div>
-              </div>
-              <button className="ghost-btn" onClick={() => setPreviewT(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <StoredTemplatePreview t={previewT} />
-          </div>
-        </div>
+        <Modal
+          className="modal-narrow"
+          title={previewT.name}
+          subtitle={`${previewT.language} · ${previewT.category ?? "UTILITY"}`}
+          onClose={() => setPreviewT(null)}
+        >
+          <StoredTemplatePreview t={previewT} />
+        </Modal>
       )}
     </div>
   );
