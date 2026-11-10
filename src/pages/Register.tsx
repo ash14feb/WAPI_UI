@@ -35,9 +35,9 @@ export function RegisterPage() {
       <form className="auth-card" onSubmit={onSubmit}>
         <div className="auth-brand">
           <img src={logoUrl} alt="UnifyLead logo" className="auth-logo" />
-          <strong style={{ fontSize: "1.25rem", color: "var(--text)" }}>UnifyLead</strong>
-          <span className="muted small" style={{ fontWeight: 500 }}>
-            Enterprise WhatsApp Cloud API Platform
+          <strong style={{ fontFamily: "var(--font-display)", fontSize: "1.25rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--brand-primary)" }}>UnifyLead</strong>
+          <span className="small" style={{ fontWeight: 500, color: "var(--text-secondary)" }}>
+            Connect. Engage. Grow.
           </span>
         </div>
 

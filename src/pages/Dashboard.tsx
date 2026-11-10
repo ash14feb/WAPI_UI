@@ -195,7 +195,7 @@ export function DashboardPage() {
                 to="/settings"
                 style={{
                   background: "rgba(255, 255, 255, 0.14)",
-                  color: "#ffffff",
+                  color: "var(--text-inverse)",
                   border: "1px solid rgba(255, 255, 255, 0.4)",
                   borderRadius: "10px",
                   padding: "0.6rem 1rem",

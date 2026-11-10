@@ -55,10 +55,10 @@ export function timeAgo(iso: string | null): string {
 }
 
 const AVATAR_COLORS = [
-  "#e0f2fe", "#fef3c7", "#dcfce7", "var(--accent-light)", "var(--danger-bg)", "#FDF1E6"
+  "var(--info-bg)", "var(--warning-bg)", "var(--success-bg)", "var(--accent-light)", "var(--danger-bg)", "#e6f7f2"
 ];
 const AVATAR_TEXT = [
-  "var(--info)", "var(--warning)", "var(--success)", "var(--success)", "var(--danger)", "#A8541F"
+  "var(--info)", "var(--warning)", "var(--success)", "var(--brand-secondary)", "var(--danger)", "var(--brand-primary)"
 ];
 
 function getAvatarColors(name: string) {
@@ -226,7 +226,7 @@ export function InboxPage() {
           </div>
         ) : displayedList.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.5rem", padding: "3rem 1.5rem", textAlign: "center" }}>
-            <MessageSquare size={32} color="#CDDAD7" />
+            <MessageSquare size={32} color="var(--border)" />
             <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No conversations found</span>
             <span className="tiny">Messages from your WhatsApp Cloud API webhook will appear here automatically.</span>
           </div>
@@ -267,7 +267,7 @@ export function InboxPage() {
                         <span className="conv-preview ellipsis" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
                           {c.lastMessage?.direction === "OUTBOUND" && (
                             c.lastMessage.status === "READ" ? (
-                              <CheckCheck size={14} color="#1C9FD6" style={{ flexShrink: 0 }} />
+                              <CheckCheck size={14} color="var(--info)" style={{ flexShrink: 0 }} />
                             ) : c.lastMessage.status === "DELIVERED" ? (
                               <CheckCheck size={14} color="var(--sidebar-text)" style={{ flexShrink: 0 }} />
                             ) : (

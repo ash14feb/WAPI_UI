@@ -202,7 +202,7 @@ function toIsoOrNull(value: string): string | null {
 
 function statusStyle(status: string): { background: string; color: string } {
   if (status === "SUCCESS") return { background: "var(--success-bg)", color: "var(--success)" };
-  if (status === "POLICY_VIOLATION") return { background: "#FDF7EF", color: "#A8541F" };
+  if (status === "POLICY_VIOLATION") return { background: "var(--warning-bg)", color: "#a8641c" };
   return { background: "var(--danger-bg)", color: "var(--danger)" };
 }
 

@@ -263,7 +263,7 @@ export function CampaignsPage() {
           />
         ) : campaigns.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
-            <Megaphone size={36} color="#CDDAD7" />
+            <Megaphone size={36} color="var(--border)" />
             <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No broadcasts scheduled or sent yet</span>
             <span className="tiny">Click "New Broadcast" to assemble your first WhatsApp campaign blast.</span>
           </div>
@@ -403,7 +403,7 @@ export function CampaignsPage() {
                   <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "0.35rem" }}>
                     Selected Template Text
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#1e293b", whiteSpace: "pre-wrap" }}>
+                  <div style={{ fontSize: "0.875rem", color: "var(--text)", whiteSpace: "pre-wrap" }}>
                     {renderPreview(bodyText, params)}
                   </div>
                 </div>
@@ -608,7 +608,7 @@ export function CampaignsPage() {
                           cursor: "pointer",
                           transition: "all 0.15s ease",
                           background: isChosen ? "var(--accent-light)" : "var(--bg)",
-                          border: isChosen ? "1.5px solid var(--brand-teal)" : "1px solid #CDDAD7",
+                          border: isChosen ? "1.5px solid var(--brand-teal)" : "1px solid var(--border)",
                           color: isChosen ? "var(--success)" : "var(--text)",
                           boxShadow: isChosen ? "0 1px 3px rgba(0, 168, 132, 0.18)" : "none",
                         }}

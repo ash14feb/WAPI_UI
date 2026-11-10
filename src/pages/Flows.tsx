@@ -8,13 +8,13 @@ interface FlowScreen { id: string; title: string; fields: FlowField[]; }
 interface Flow { id: string; name: string; status: string; metaFlowId: string | null; categories: string | null; flowJson: string; version: number; updatedAt: string; }
 interface FlowResponse { id: string; phone: string; responseJson: string; receivedAt: string; }
 
-const card: React.CSSProperties = { border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginTop: 16, background: "#fff" };
-const btn: React.CSSProperties = { padding: "8px 14px", borderRadius: 8, border: "1px solid #CDDAD7", background: "var(--text)", color: "#fff", cursor: "pointer" };
-const btnGhost: React.CSSProperties = { ...btn, background: "#fff", color: "var(--text)" };
-const input: React.CSSProperties = { padding: 8, borderRadius: 8, border: "1px solid #CDDAD7", fontSize: 14 };
+const card: React.CSSProperties = { border: "1px solid var(--border)", borderRadius: "var(--radius-card)", padding: 20, marginTop: 16, background: "var(--bg-card)" };
+const btn: React.CSSProperties = { padding: "8px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--text)", color: "var(--text-inverse)", cursor: "pointer" };
+const btnGhost: React.CSSProperties = { ...btn, background: "var(--bg-card)", color: "var(--text)" };
+const input: React.CSSProperties = { padding: 8, borderRadius: 8, border: "1px solid var(--border)", fontSize: 14 };
 const pill = (s: string): React.CSSProperties => {
   const ok = s === "PUBLISHED";
-  return { display: "inline-block", padding: "2px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: ok ? "var(--success-bg)" : "var(--bg-subtle)", color: ok ? "var(--success)" : "#374151", border: `1px solid ${ok ? "#7FD9B9" : "#CDDAD7"}` };
+  return { display: "inline-block", padding: "2px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: ok ? "var(--success-bg)" : "var(--bg-subtle)", color: ok ? "var(--success)" : "var(--text-muted)", border: `1px solid ${ok ? "var(--success-border)" : "var(--border)"}` };
 };
 
 function seqLetters(i: number): string {
@@ -75,26 +75,26 @@ function paletteLabel(kind: string): string {
 function PhonePreview({ screen, flowName }: { screen: FlowScreen | undefined; flowName: string }) {
   if (!screen) return <div style={{ color: "var(--text-subtle)", fontSize: 13 }}>Select a screen to preview</div>;
   return (
-    <div style={{ width: 250, borderRadius: 28, border: "8px solid var(--text)", background: "#e7ffdb", padding: "14px 10px", boxShadow: "0 8px 24px rgba(0,0,0,.15)" }}>
-      <div style={{ fontSize: 11, color: "#667781", textAlign: "center", marginBottom: 6 }}>WHATSAPP · {flowName || "flow"}</div>
-      <div style={{ background: "#fff", borderRadius: 10, padding: 10, boxShadow: "0 1px 1px rgba(0,0,0,.1)" }}>
+    <div style={{ width: 250, borderRadius: 28, border: "8px solid var(--text)", background: "var(--chat-bg)", padding: "14px 10px", boxShadow: "0 8px 24px rgba(0,0,0,.15)" }}>
+      <div style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "center", marginBottom: 6 }}>WHATSAPP · {flowName || "flow"}</div>
+      <div style={{ background: "var(--bg-card)", borderRadius: 10, padding: 10, boxShadow: "0 1px 1px rgba(0,0,0,.1)" }}>
         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{screen.title || "Untitled step"}</div>
         {screen.fields.length === 0 && <div style={{ fontSize: 12, color: "var(--text-subtle)" }}>Drop fields here…</div>}
         {screen.fields.map((f, i) => (
           <div key={i} style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 600 }}>{f.label || "Untitled"}{f.required ? " *" : ""}</div>
             {(f.kind === "dropdown" || f.kind === "checkbox" || f.kind === "radio") ? (
-              <div style={{ border: "1px solid #CDDAD7", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--text-muted)" }}>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--text-muted)" }}>
                 {(f.options ?? []).slice(0, 3).join(" · ") || "options…"}
               </div>
             ) : f.kind === "date" ? (
-              <div style={{ border: "1px solid #CDDAD7", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--text-muted)" }}>📅 dd/mm/yyyy</div>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--text-muted)" }}>📅 dd/mm/yyyy</div>
             ) : (
-              <div style={{ border: "1px solid #CDDAD7", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--text-subtle)" }}>{f.placeholder || "Type answer…"}</div>
+              <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "var(--text-subtle)" }}>{f.placeholder || "Type answer…"}</div>
             )}
           </div>
         ))}
-        <div style={{ background: "var(--brand-teal)", color: "#fff", textAlign: "center", borderRadius: 8, padding: 7, fontSize: 13, fontWeight: 700, marginTop: 4 }}>Continue →</div>
+        <div style={{ background: "var(--brand-teal)", color: "var(--text-inverse)", textAlign: "center", borderRadius: 8, padding: 7, fontSize: 13, fontWeight: 700, marginTop: 4 }}>Continue →</div>
       </div>
     </div>
   );
@@ -351,7 +351,7 @@ function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, sa
           <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 6 }}>ELEMENTS — drag onto canvas</div>
           {PALETTE.map((p) => (
             <div key={p.kind} draggable onDragStart={(e) => { setDragKind(p.kind); e.dataTransfer.effectAllowed = "copy"; }}
-              style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "8px 10px", marginBottom: 6, cursor: "grab", background: dragKind === p.kind ? "#eef2ff" : "var(--bg-subtle)" }}>
+              style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "8px 10px", marginBottom: 6, cursor: "grab", background: dragKind === p.kind ? "var(--accent-light)" : "var(--bg-subtle)" }}>
               <div style={{ fontSize: 14 }}>{p.icon} <strong>{p.label}</strong></div>
               <div style={{ fontSize: 11, color: "var(--text-subtle)" }}>{p.hint}</div>
             </div>
@@ -378,7 +378,7 @@ function FlowBuilder({ name, setName, screens, setScreens, editingName, busy, sa
                 <input value={screen.title} onChange={(e) => { const c = [...screens]; c[si] = { ...screen, title: e.target.value }; setScreens(c); }} placeholder="Step title" style={{ ...input, flex: 1 }} />
               </div>
               <div onDragOver={(e) => { e.preventDefault(); setOverScreen(si); }} onDragLeave={() => setOverScreen(null)} onDrop={(e) => { e.preventDefault(); dropFieldOnto(si); }}
-                style={{ minHeight: 140, border: `2px dashed ${overScreen === si ? "var(--text)" : "#CDDAD7"}`, borderRadius: 10, padding: 8, background: overScreen === si ? "var(--bg-subtle)" : "#fff" }}>
+                style={{ minHeight: 140, border: `2px dashed ${overScreen === si ? "var(--text)" : "var(--border)"}`, borderRadius: 10, padding: 8, background: overScreen === si ? "var(--bg-subtle)" : "var(--bg-card)" }}>
                 {screen.fields.length === 0 && <div style={{ color: "var(--text-subtle)", fontSize: 13, textAlign: "center", padding: 20 }}>Drag elements here ✨</div>}
                 {screen.fields.map((f, fi) => (
                   <div key={fi} draggable

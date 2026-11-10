@@ -87,7 +87,7 @@ function StoredTemplatePreview({ t }: { t: MessageTemplate }) {
         {header && header.format !== "TEXT" && (
           <div
             style={{
-              background: "#e0dcd4",
+              background: "var(--bg-subtle)",
               borderRadius: "8px",
               padding: "1rem",
               textAlign: "center",
@@ -464,7 +464,7 @@ export function TemplatesPage() {
       </header>
 
       {syncing && (
-        <div className="notice" style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "#f0fdf9", borderColor: "var(--success-border)", color: "var(--success)" }}>
+        <div className="notice" style={{ display: "flex", alignItems: "center", gap: "0.6rem", background: "var(--success-bg)", borderColor: "var(--success-border)", color: "var(--success)" }}>
           <ButtonSpinner size={16} color="var(--brand-teal)" />
           <span>Synchronizing message templates with Meta Business Cloud API…</span>
         </div>
@@ -496,7 +496,7 @@ export function TemplatesPage() {
           />
         ) : templates.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
-            <FileText size={36} color="#CDDAD7" />
+            <FileText size={36} color="var(--border)" />
             <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No templates found</span>
             <span className="tiny">Create your first template or click "Sync from Meta" to pull existing ones.</span>
           </div>
@@ -807,7 +807,7 @@ export function TemplatesPage() {
                                 padding: "0.25rem 0.6rem",
                                 fontSize: "0.75rem",
                                 background: "var(--panel)",
-                                border: "1px solid #CDDAD7",
+                                border: "1px solid var(--border)",
                                 borderRadius: "6px",
                                 color: "var(--brand-teal)",
                                 fontWeight: 600,
@@ -887,7 +887,7 @@ export function TemplatesPage() {
                         <div className="muted tiny">No buttons — template sends as plain text.</div>
                       )}
                       {buttons.map((b, i) => (
-                        <div key={i} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "8px", padding: "0.625rem", marginBottom: "0.5rem" }}>
+                        <div key={i} style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "8px", padding: "0.625rem", marginBottom: "0.5rem" }}>
                           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
                             <select value={b.type} onChange={(e) => setButtons((p) => p.map((x, xI) => xI === i ? { ...x, type: e.target.value as TemplateButton["type"] } : x))} style={{ fontSize: "0.8125rem" }}>
                               <option value="QUICK_REPLY">↩ Quick reply</option>

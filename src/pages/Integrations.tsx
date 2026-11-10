@@ -3,11 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { ButtonSpinner } from "../components/Loader";
 
-const card: React.CSSProperties = { border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginTop: 16, background: "#fff", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
-const btn: React.CSSProperties = { padding: "8px 14px", borderRadius: 8, border: "1px solid #CDDAD7", background: "var(--text)", color: "#fff", cursor: "pointer" };
-const btnGhost: React.CSSProperties = { ...btn, background: "#fff", color: "var(--text)" };
-const input: React.CSSProperties = { padding: 9, borderRadius: 8, border: "1px solid #CDDAD7", fontSize: 14 };
-const pill = (ok: boolean): React.CSSProperties => ({ display: "inline-block", padding: "2px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: ok ? "var(--success-bg)" : "var(--danger-bg)", color: ok ? "var(--success)" : "var(--danger)", border: `1px solid ${ok ? "#7FD9B9" : "var(--danger-border)"}` });
+const card: React.CSSProperties = { border: "1px solid var(--border)", borderRadius: "var(--radius-card)", padding: 20, marginTop: 16, background: "var(--bg-card)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
+const btn: React.CSSProperties = { padding: "8px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--text)", color: "var(--text-inverse)", cursor: "pointer" };
+const btnGhost: React.CSSProperties = { ...btn, background: "var(--bg-card)", color: "var(--text)" };
+const input: React.CSSProperties = { padding: 9, borderRadius: 8, border: "1px solid var(--border)", fontSize: 14 };
+const pill = (ok: boolean): React.CSSProperties => ({ display: "inline-block", padding: "2px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: ok ? "var(--success-bg)" : "var(--danger-bg)", color: ok ? "var(--success)" : "var(--danger)", border: `1px solid ${ok ? "var(--success-border)" : "var(--danger-border)"}` });
 
 function shortMid(t: string): string {
   if (t.startsWith("seen ")) return `seen ${t.slice(5, 5 + 12)}…`;
@@ -67,7 +67,7 @@ export function IntegrationsPage() {
       <h1 style={{ marginBottom: 4 }}>Integrations</h1>
       <p style={{ color: "var(--text-muted)", marginTop: 0 }}>Connect stores and channels to this workspace.</p>
       {shopifyResult === "connected" && (
-        <div style={{ background: "var(--success-bg)", border: "1px solid #7FD9B9", color: "var(--success)", borderRadius: 10, padding: "12px 16px", marginTop: 12 }}>
+        <div style={{ background: "var(--success-bg)", border: "1px solid var(--success-border)", color: "var(--success)", borderRadius: 10, padding: "12px 16px", marginTop: 12 }}>
           ✅ Connected to <strong>{shopParam ?? status?.shop ?? "your store"}</strong> — order notifications are active.
         </div>
       )}

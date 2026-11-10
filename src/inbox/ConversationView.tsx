@@ -51,7 +51,7 @@ function Ticks({ status }: { status: string }) {
   if (status === "READ") {
     return (
       <span className="ticks read" title="Read by recipient">
-        <CheckCheck size={14} color="#1C9FD6" />
+        <CheckCheck size={14} color="var(--info)" />
       </span>
     );
   }
@@ -467,15 +467,15 @@ export function ConversationView() {
           style={{
             margin: "0.5rem 1rem",
             padding: "0.6rem 0.85rem",
-            background: "#FDF7EF",
-            border: "1px solid #F6DCC0",
+            background: "var(--warning-bg)",
+            border: "1px solid var(--warning-border)",
             borderRadius: "8px",
-            color: "#8A4A24",
+            color: "#a8641c",
             fontSize: "0.8125rem",
           }}
         >
           This contact opted out by replying STOP. Sending is disabled until they message you again, or you remove the
-          <code style={{ background: "#FDF1E6", padding: "0 0.25rem", borderRadius: "4px" }}> opted_out </code>
+          <code style={{ background: "var(--warning-bg)", padding: "0 0.25rem", borderRadius: "4px" }}> opted_out </code>
           tag from Contacts.
         </div>
       )}
@@ -531,7 +531,7 @@ export function ConversationView() {
 
       <form className="composer" onSubmit={onSend}>
         <label className="ghost-btn" title="Attach file or media" style={{ cursor: "pointer", borderRadius: "50%", padding: "0.6rem" }}>
-          <Paperclip size={18} color="#54656f" />
+          <Paperclip size={18} color="var(--text-muted)" />
           <input
             type="file"
             hidden

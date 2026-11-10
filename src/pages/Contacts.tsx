@@ -41,10 +41,10 @@ function tagsWithoutOptOut(tags: string | null | undefined): string | undefined 
 }
 
 const AVATAR_COLORS = [
-  "#e0f2fe", "#fef3c7", "#dcfce7", "var(--accent-light)", "var(--danger-bg)", "#FDF1E6"
+  "var(--info-bg)", "var(--warning-bg)", "var(--success-bg)", "var(--accent-light)", "var(--danger-bg)", "#e6f7f2"
 ];
 const AVATAR_TEXT = [
-  "var(--info)", "var(--warning)", "var(--success)", "var(--success)", "var(--danger)", "#A8541F"
+  "var(--info)", "var(--warning)", "var(--success)", "var(--brand-secondary)", "var(--danger)", "var(--brand-primary)"
 ];
 
 function getAvatarColors(name: string) {
@@ -262,7 +262,7 @@ export function ContactsPage() {
           />
         ) : contacts.length === 0 ? (
           <div className="center muted" style={{ flexDirection: "column", gap: "0.75rem", padding: "3.5rem 1rem" }}>
-            <Users size={36} color="#CDDAD7" />
+            <Users size={36} color="var(--border)" />
             <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>No contacts found</span>
             <span className="tiny">Click "Add Contact" above or receive an inbound customer message to populate this directory.</span>
           </div>
@@ -434,7 +434,7 @@ export function ContactsPage() {
                   required
                   disabled={busy}
                   placeholder="e.g. 15553829920"
-                  style={isDuplicatePhone ? { borderColor: "#ef4444" } : undefined}
+                  style={isDuplicatePhone ? { borderColor: "var(--danger)" } : undefined}
                 />
                 {isDuplicatePhone && (
                   <span className="field-error" style={{ color: "var(--danger)", fontWeight: 600 }}>
