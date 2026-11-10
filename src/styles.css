@@ -198,11 +198,8 @@ h1, h2, h3, h4, h5, h6 {
 .brand-logo {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  object-fit: cover;
-  background: #111b21;
-  border: 1px solid #2a3942;
-  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.15);
+  object-fit: contain;
+  background: transparent;
 }
 
 .brand-badge {
@@ -1646,9 +1643,7 @@ h1, h2, h3, h4, h5, h6 {
 .auth-logo {
   width: 64px;
   height: 64px;
-  border-radius: 16px;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0, 168, 132, 0.2);
+  object-fit: contain;
 }
 
 .auth-card h1 {

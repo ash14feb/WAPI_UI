@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import logoUrl from "../../iwapilogo.png";
+import logoUrl from "../../public/unifylead-logo.png";
 import {
   LayoutDashboard,
   MessageSquare,
