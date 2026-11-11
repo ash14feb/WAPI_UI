@@ -19,6 +19,7 @@ import {
   renderPreview,
   renderPreviewFull,
 } from "../inbox/templatePreview";
+import { inspectVariables, validateTemplateBody } from "../utils/templateBodyRules";
 import { PageLoader, ButtonSpinner } from "../components/Loader";
 import {
   FileText,
@@ -181,7 +182,12 @@ export function TemplatesPage() {
 
   function handleAddVariable() {
     const nextIdx = countVars(bodyText) + 1;
-    setBodyText((prev) => (prev ? `${prev} {{${nextIdx}}}` : `{{${nextIdx}}}`));
+    const token = `{{${nextIdx}}}`;
+    setBodyText((prev) => {
+      const text = prev.trimEnd();
+      // Appending would end the body on a variable, which Meta rejects — keep real text after it.
+      return text ? `${text} ${token} thanks.` : `Hi ${token}, your update is ready.`;
+    });
   }
 
   const load = useCallback(async () => {
@@ -362,6 +368,9 @@ export function TemplatesPage() {
       const namedMatches = Array.from(bodyText.matchAll(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g));
       if (namedMatches.some((m) => isNaN(Number(m[1])))) {
         fieldErrors.bodyText = "Meta requires numbered variables like {{1}}, {{2}} instead of named parameters.";
+      } else {
+        const bodyError = validateTemplateBody(bodyText);
+        if (bodyError) fieldErrors.bodyText = bodyError;
       }
     }
   }
@@ -759,6 +768,32 @@ export function TemplatesPage() {
                       maxLength={1024}
                     />
                     {fieldErrors.bodyText && <span className="field-error span-2">{fieldErrors.bodyText}</span>}
+                    {!fieldErrors.bodyText && varCount > 0 && (
+                      <div className="span-2 muted tiny" style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }}>
+                        {inspectVariables(bodyText).map((v, i) => (
+                          <span
+                            key={i}
+                            title={
+                              v.clean
+                                ? `${v.variable} is cleanly separated`
+                                : `${v.variable} touches text or irregular whitespace (before: "${v.before || "∅"}", after: "${v.after || "∅"}")`
+                            }
+                            style={{
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              padding: "0.1rem 0.4rem",
+                              borderRadius: "5px",
+                              fontFamily: "var(--font-mono)",
+                              color: v.clean ? "var(--success)" : "var(--danger)",
+                              background: v.clean ? "var(--success-bg)" : "var(--danger-bg, #fee2e2)",
+                              border: `1px solid ${v.clean ? "var(--success-border)" : "var(--danger)"}`,
+                            }}
+                          >
+                            {v.variable}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Always visible Sample Values section */}
                     <div
